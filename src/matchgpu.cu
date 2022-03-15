@@ -217,6 +217,42 @@ __global__ void gSelect(int *match, const int nrVertices, const uint random)
 	match[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
 }
 
+__global__ void gSelect(int *color, int *tail, const int nrVertices, const uint random)
+{
+	//Determine blue and red groups using MD5 hashing.
+	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+
+	//Can this vertex still be matched?
+	if (color[i] >= 5) return;
+
+	//Start hashing.
+	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
+	uint a = h0, b = h1, c = h2, d = h3, e, f, g = i;
+
+	for (int j = 0; j < 16; ++j)
+	{
+		f = (b & c) | ((~b) & d);
+
+		e = d;
+		d = c;
+		c = b;
+		b += LEFTROTATE(a + f + dMD5K[j] + g, dMD5R[j]);
+		a = e;
+
+		h0 += a;
+		h1 += b;
+		h2 += c;
+		h3 += d;
+
+		g *= random;
+	}
+	
+	color[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
+}
+
 __global__ void gaSelect(int *match, const int nrVertices, const uint random)
 {
 	//Determine blue and red groups using MD5 hashing.
@@ -278,6 +314,41 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 		{
 			//Match the vertices if the request was mutual.
 			match[i] = 4 + min(i, r);
+		}
+	}
+}
+
+
+__global__ void gMatch(int *color, int *tails, int *linkedlists, const int *requests, const int nrVertices)
+{
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+
+	const int r = requests[i];
+
+	//Only unmatched vertices make requests.
+	// Need to reset this every coarsening iteration
+	if (r == nrVertices + 1)
+	{
+		//This is vertex without any available neighbours, discard it.
+		color[i] = 2;
+	}
+	else if (r < nrVertices)
+	{
+		//This vertex has made a valid request.
+		// Only true if a R+ paired with a B- or R- with a B+
+		if (requests[r] == i)
+		{	// Update my next to be my partner
+			linkedlists[i] = r;
+			// Match the vertices if the request was mutual.
+			// Head and tail take color of smaller vertex.
+			// match 2 singletons
+			// R <-> B = -R.R+ or -B.B+
+			// match 2 pairs
+			//						x  x           x  x
+			// -R-R+ <-> -B.B+ = -R.R+.B-.R+ or -B.B+.R-.B+, x will be decolored in next kernel
+			color[tails[i]] = 4 + min(tails[i], tails[r]);
 		}
 	}
 }
@@ -510,6 +581,108 @@ void GraphMatchingGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1
 		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, graph.nrVertices);
 		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, graph.nrVertices);
 		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, drequests, graph.nrVertices);
+
+#ifdef MATCH_INTERMEDIATE_COUNT
+		cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
+		
+		double weight = 0;
+		long size = 0;
+
+		getWeight(weight, size, match, graph);
+
+		cout << i + 1 << "\t" << weight << "\t" << size << endl;
+#endif
+	}
+	
+	cudaEventRecord(t2, 0);
+	cudaEventSynchronize(t2);
+
+#ifndef NDEBUG
+	cudaError_t error;
+
+	if ((error = cudaGetLastError()) != cudaSuccess)
+	{
+		cerr << "A CUDA error occurred during the matching process: " << cudaGetErrorString(error) << endl;
+		throw exception();
+	}
+#endif
+
+	//Copy obtained matching on the device back to the host.
+	if (cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess)
+	{
+		cerr << "Unable to retrieve data!" << endl;
+		throw exception();
+	}
+
+	//Free memory.
+	cudaFree(drequests);
+	cudaFree(dmatch);
+	cudaUnbindTexture(neighboursTexture);
+	cudaUnbindTexture(neighbourRangesTexture);
+}
+
+void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
+{
+	//Creates a greedy random matching on the GPU.
+	//Assumes the current matching is empty.
+
+	assert((int)match.size() == graph.nrVertices);
+	
+	//Setup textures.
+	cudaChannelFormatDesc neighbourRangesTextureDesc = cudaCreateChannelDesc<int2>();
+
+	neighbourRangesTexture.addressMode[0] = cudaAddressModeWrap;
+	neighbourRangesTexture.filterMode = cudaFilterModePoint;
+	neighbourRangesTexture.normalized = false;
+	cudaBindTexture(0, neighbourRangesTexture, (void *)dneighbourRanges, neighbourRangesTextureDesc, sizeof(int2)*graph.neighbourRanges.size());
+	
+	cudaChannelFormatDesc neighboursTextureDesc = cudaCreateChannelDesc<int>();
+
+	neighboursTexture.addressMode[0] = cudaAddressModeWrap;
+	neighboursTexture.filterMode = cudaFilterModePoint;
+	neighboursTexture.normalized = false;
+	cudaBindTexture(0, neighboursTexture, (void *)dneighbours, neighboursTextureDesc, sizeof(int)*graph.neighbours.size());
+
+	//Allocate necessary buffers on the device.
+	int *dlinkedlists, *dtails, *dcolors, *drequests;
+
+	if (cudaMalloc(&dlinkedlists, sizeof(int)*graph.nrVertices) != cudaSuccess
+			|| cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess
+				|| cudaMalloc(&dtails, sizeof(int)*graph.nrVertices) != cudaSuccess
+					|| cudaMalloc(&dcolors, sizeof(int)*graph.nrVertices) != cudaSuccess)
+	{
+		cerr << "Not enough memory on device!" << endl;
+		throw exception();
+	}
+
+	//Clear matching.
+	if (cudaMemset(dlinkedlists, 0, sizeof(int)*graph.nrVertices) != cudaSuccess)
+	{
+		cerr << "Unable to clear matching on device!" << endl;
+		throw exception();
+	}
+
+	//Perform matching.
+	int blocksPerGrid = (graph.nrVertices + threadsPerBlock - 1)/threadsPerBlock;
+	
+	//Perform all stages, one-by-one.
+#ifndef NDEBUG
+	cudaGetLastError();
+#endif
+
+	cudaEventRecord(t1, 0);
+	cudaEventSynchronize(t1);
+
+#ifdef MATCH_INTERMEDIATE_COUNT
+	cout << "0\t0\t0" << endl;
+#endif
+
+	for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
+	{
+		gSelect<<<blocksPerGrid, threadsPerBlock>>>(dcolors, dtails, graph.nrVertices, rand());
+		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, graph.nrVertices);
+		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, graph.nrVertices);
+		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dcolors, dlinkedlists, dtails, drequests, graph.nrVertices);
 
 #ifdef MATCH_INTERMEDIATE_COUNT
 		cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
