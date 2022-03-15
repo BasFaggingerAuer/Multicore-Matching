@@ -228,8 +228,8 @@ __global__ void gSelect(int *color, int *head, int *tail, const int nrVertices, 
 	//Can this vertex still be matched?
 	if (color[i] >= 2) return;
 
-	// Is this vertex a head or tail?
-	if (tail[i] != i && head[i] != i) return;
+	// Is this vertex a head or tail? Else decolor
+	if (tail[i] != i && head[i] != i) color[i] = 2;
 
 	//Start hashing.
 	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
@@ -324,7 +324,7 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 }
 
 
-__global__ void gMatch(int *color, int *tails, int *linkedlists, const int *requests, const int nrVertices)
+__global__ void gMatch(int *color, int *heads, int *tails, int *linkedlists, const int *requests, const int nrVertices)
 {
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -339,23 +339,27 @@ __global__ void gMatch(int *color, int *tails, int *linkedlists, const int *requ
 		//This is vertex without any available neighbours, discard it.
 		color[i] = 2;
 	}
+	// Only true if a R is neighbors with a B
+	// The pairing might have not occurred because of extra sense requirement
 	else if (r < nrVertices)
 	{
 		// This vertex has made a valid request.
 		// Match the vertices if the request was mutual.
 		// Only true if a R+ paired with a B- or R- with a B+
 		if (requests[r] == i)
-		{	// Update my next to be my partner if I'm negative sense
-			if(!sense[i]) 
+			// Might need kernel synchronization..
+			if(sense[i]){ 
+				heads[i] = heads[r];
+				color[heads[i]] = 4 + min(heads[i], tails[i]);
+			} else {
+				// Update my next to be my partner if I'm negative sense
+				// If I maintain a doubly LL, ll is updated for both directions.
 				linkedlists[i] = r;
-			// Head and tail take color of smaller vertex.
-			// match 2 singletons
-			// R <-> B = -R.R+ or -B.B+
-			// match 2 pairs
-			// -R-R+ <-> -B.B+ = -R.x.x.R+ or -B.x.x.B+, x indicates deactivated nodes
-			color[tails[i]] = 4 + min(tails[i], tails[r]);
+				tails[i] = tails[r];
+				color[tails[i]] = 4 + min(heads[i], tails[i]);
+			}
+			// This is permanent.  Even in the next coarsening round, internal vertices are not reset.
 			color[i] = 2;
-			// still need to loop through ll of colored nodes to find new tail.
 		}
 	}
 }
