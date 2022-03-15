@@ -217,7 +217,7 @@ __global__ void gSelect(int *match, const int nrVertices, const uint random)
 	match[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
 }
 
-__global__ void gSelect(int *color, int *head, int *tail, const int nrVertices, const uint random)
+__global__ void gSelect(int *colors, int *heads, int *tails, const int nrVertices, const uint random)
 {
 	//Determine blue and red groups using MD5 hashing.
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
@@ -226,16 +226,16 @@ __global__ void gSelect(int *color, int *head, int *tail, const int nrVertices, 
 	if (i >= nrVertices) return;
 
 	//Can this vertex still be matched?
-	if (color[i] >= 2) return;
+	if (colors[i] >= 2) return;
 
-	// Is this vertex a head or tail? Else decolor
-	if (tail[i] != i && head[i] != i) color[i] = 2;
+	// Is this vertex a heads or tails? Else decolors
+	if (tails[i] != i && heads[i] != i) colors[i] = 2;
 
 	//Start hashing.
 	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
 	uint a = h0, b = h1, c = h2, d = h3, e, f;
-	// Color head and tail same color.
-	uint g = min(tail[i], head[i]);
+	// colors heads and tails same colors.
+	uint g = min(tails[i], heads[i]);
 
 	for (int j = 0; j < 16; ++j)
 	{
@@ -255,7 +255,7 @@ __global__ void gSelect(int *color, int *head, int *tail, const int nrVertices, 
 		g *= random;
 	}
 	
-	color[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
+	colors[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
 }
 
 __global__ void gaSelect(int *match, const int nrVertices, const uint random)
@@ -324,7 +324,7 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 }
 
 
-__global__ void gMatch(int *color, int *heads, int *tails, int *linkedlists, const int *requests, const int nrVertices)
+__global__ void gMatch(int *colors, int *heads, int *tails, int *linkedlists, const int *requests, const int nrVertices)
 {
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -337,7 +337,7 @@ __global__ void gMatch(int *color, int *heads, int *tails, int *linkedlists, con
 	if (r == nrVertices + 1)
 	{
 		//This is vertex without any available neighbours, discard it.
-		color[i] = 2;
+		colors[i] = 2;
 	}
 	// Only true if a R is neighbors with a B
 	// The pairing might have not occurred because of extra sense requirement
@@ -345,21 +345,28 @@ __global__ void gMatch(int *color, int *heads, int *tails, int *linkedlists, con
 	{
 		// This vertex has made a valid request.
 		// Match the vertices if the request was mutual.
-		// Only true if a R+ paired with a B- or R- with a B+
-		if (requests[r] == i)
-			// Might need kernel synchronization..
+		// R+ paired with a B-  -> R+.R- or B+.B-
+		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
+		if (requests[r] == i){
+			// No race-conditions:
+			// + sense: read heads[r] and write into heads[i], tails[i] unchanged.
+			// - sense: read tails[r] and write into tails[i], heads[i] unchanged.
+
+			// Positive sense, update tail
 			if(sense[i]){ 
+				// Update head
 				heads[i] = heads[r];
-				color[heads[i]] = 4 + min(heads[i], tails[i]);
+				colors[heads[i]] = 4 + min(heads[i], tails[i]);
 			} else {
+				// Negative sense, update head
 				// Update my next to be my partner if I'm negative sense
 				// If I maintain a doubly LL, ll is updated for both directions.
 				linkedlists[i] = r;
+
 				tails[i] = tails[r];
-				color[tails[i]] = 4 + min(heads[i], tails[i]);
+				// heads[r] isn't thread-sensitive
+				colors[tails[i]] = 4 + min(heads[i], tails[i]);
 			}
-			// This is permanent.  Even in the next coarsening round, internal vertices are not reset.
-			color[i] = 2;
 		}
 	}
 }
