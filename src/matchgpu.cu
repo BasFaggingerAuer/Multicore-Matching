@@ -217,7 +217,7 @@ __global__ void gSelect(int *match, const int nrVertices, const uint random)
 	match[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
 }
 
-__global__ void gSelect(int *color, int *tail, const int nrVertices, const uint random)
+__global__ void gSelect(int *color, int *head, int *tail, const int nrVertices, const uint random)
 {
 	//Determine blue and red groups using MD5 hashing.
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
@@ -226,11 +226,16 @@ __global__ void gSelect(int *color, int *tail, const int nrVertices, const uint 
 	if (i >= nrVertices) return;
 
 	//Can this vertex still be matched?
-	if (color[i] >= 5) return;
+	if (color[i] >= 2) return;
+
+	// Is this vertex a head or tail?
+	if (tail[i] != i && head[i] != i) return;
 
 	//Start hashing.
 	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
-	uint a = h0, b = h1, c = h2, d = h3, e, f, g = i;
+	uint a = h0, b = h1, c = h2, d = h3, e, f;
+	// Color head and tail same color.
+	uint g = min(tail[i], head[i]);
 
 	for (int j = 0; j < 16; ++j)
 	{
@@ -336,19 +341,21 @@ __global__ void gMatch(int *color, int *tails, int *linkedlists, const int *requ
 	}
 	else if (r < nrVertices)
 	{
-		//This vertex has made a valid request.
+		// This vertex has made a valid request.
+		// Match the vertices if the request was mutual.
 		// Only true if a R+ paired with a B- or R- with a B+
 		if (requests[r] == i)
-		{	// Update my next to be my partner
-			linkedlists[i] = r;
-			// Match the vertices if the request was mutual.
+		{	// Update my next to be my partner if I'm negative sense
+			if(!sense[i]) 
+				linkedlists[i] = r;
 			// Head and tail take color of smaller vertex.
 			// match 2 singletons
 			// R <-> B = -R.R+ or -B.B+
 			// match 2 pairs
-			//						x  x           x  x
-			// -R-R+ <-> -B.B+ = -R.R+.B-.R+ or -B.B+.R-.B+, x will be decolored in next kernel
+			// -R-R+ <-> -B.B+ = -R.x.x.R+ or -B.x.x.B+, x indicates deactivated nodes
 			color[tails[i]] = 4 + min(tails[i], tails[r]);
+			color[i] = 2;
+			// still need to loop through ll of colored nodes to find new tail.
 		}
 	}
 }
@@ -644,12 +651,18 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 	cudaBindTexture(0, neighboursTexture, (void *)dneighbours, neighboursTextureDesc, sizeof(int)*graph.neighbours.size());
 
 	//Allocate necessary buffers on the device.
-	int *dlinkedlists, *dtails, *dcolors, *drequests;
+	// dlinkedlists - to generalize matching to n edges
+	// dtails - to quickly flip sense of strand
+	// dcolors - same as singleton implementation
+	// dsense - indicates directionality of strand
+	int *dlinkedlists, *dheads, *dtails, *dcolors, *drequests, *dsense;
 
 	if (cudaMalloc(&dlinkedlists, sizeof(int)*graph.nrVertices) != cudaSuccess
 			|| cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess
-				|| cudaMalloc(&dtails, sizeof(int)*graph.nrVertices) != cudaSuccess
-					|| cudaMalloc(&dcolors, sizeof(int)*graph.nrVertices) != cudaSuccess)
+				|| cudaMalloc(&dheads, sizeof(int)*graph.nrVertices) != cudaSuccess
+					|| cudaMalloc(&dtails, sizeof(int)*graph.nrVertices) != cudaSuccess
+						|| cudaMalloc(&dcolors, sizeof(int)*graph.nrVertices) != cudaSuccess
+							|| cudaMalloc(&dsense, sizeof(int)*graph.nrVertices) != cudaSuccess)
 	{
 		cerr << "Not enough memory on device!" << endl;
 		throw exception();
@@ -679,7 +692,7 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 
 	for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
 	{
-		gSelect<<<blocksPerGrid, threadsPerBlock>>>(dcolors, dtails, graph.nrVertices, rand());
+		gSelect<<<blocksPerGrid, threadsPerBlock>>>(dcolors, dheads, dtails, graph.nrVertices, rand());
 		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, graph.nrVertices);
 		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, graph.nrVertices);
 		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dcolors, dlinkedlists, dtails, drequests, graph.nrVertices);
