@@ -56,7 +56,7 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 		cerr << "Unable to transfer graph data to device!" << endl;
 		throw exception();
 	}
-	cudaError_t cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint));
+	cudaError_t cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint),0,cudaMemcpyHostToDevice);
 	//Set select barrier.
 	if (cudaStatus != cudaSuccess)
 	{
