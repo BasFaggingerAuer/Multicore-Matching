@@ -9,6 +9,8 @@ link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 
 add_executable(match match.cpp)
+set_target_properties(match PROPERTIES
+        CUDA_ARCHITECTURES "all")
 target_link_libraries(match ${CUDA_LIBRARY} cuda)
 target_link_libraries(match ${TBB_LIBRARY})
 target_link_libraries(match ${Boost_LIBRARIES})

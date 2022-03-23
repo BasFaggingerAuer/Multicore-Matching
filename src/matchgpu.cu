@@ -65,7 +65,7 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 	{
 		cerr << "Unable to set selection barrier! " << errType << " " << selectBarrier << endl;
 		cerr << "barrier " << selectBarrier << "< UINT_MAX" << (selectBarrier < UINT_MAX) << endl;
-		cerr << "GPU size " << uintGPUSize << "< CPU size" << sizeof(uint) << endl;
+		cerr << "GPU size " << uintGPUSize << " CPU size" << sizeof(uint) << endl;
 
 		throw exception();
 	}
