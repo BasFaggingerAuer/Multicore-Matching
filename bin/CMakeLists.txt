@@ -7,12 +7,10 @@ find_package(Boost COMPONENTS iostreams program_options REQUIRED)
 
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
-export CC="/wsu/el7/gnu9/9.1.0/root/usr/bin/gcc"
-export CXX="/wsu/el7/gnu9/9.1.0/root/usr/bin/g++"
 add_executable(match match.cpp)
 #set_target_properties(match PROPERTIES
-#        CUDA_ARCHITECTURES "35;37;60;70;80")
-target_compile_options(match PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-gencode arch=compute_37,code=sm_37>)
+CUDA_ARCHITECTURES "35;37;60;70;80")
+#target_compile_options(match PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-gencode arch=compute_37,code=sm_37>)
 target_link_libraries(match ${CUDA_LIBRARY} cuda)
 target_link_libraries(match ${TBB_LIBRARY})
 target_link_libraries(match ${Boost_LIBRARIES})
