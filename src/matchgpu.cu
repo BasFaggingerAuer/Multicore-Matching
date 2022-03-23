@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 using namespace mtc;
 
+__constant__ uint dSelectBarrier = 0x8000000;
 
 GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBlock, const unsigned int &_selectBarrier) :
 		threadsPerBlock(_threadsPerBlock),
@@ -55,11 +56,13 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 		cerr << "Unable to transfer graph data to device!" << endl;
 		throw exception();
 	}
-
+	cudaError_t cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint));
 	//Set select barrier.
-	if (cudaMemcpyToSymbol(mtc::dSelectBarrier, &selectBarrier, sizeof(uint)) != cudaSuccess)
+	if (cudaStatus != cudaSuccess)
 	{
 		cerr << "Unable to set selection barrier!" << endl;
+		cerr << cudaStatus << endl;
+
 		throw exception();
 	}
 }
@@ -161,9 +164,6 @@ texture<float, cudaTextureType1D, cudaReadModeElementType> weightsTexture;
    3   = reserved,
    >=4 = matched.
 */
-
-__constant__ uint dSelectBarrier = 0x8000000;
-
 
 //Nothing-up-my-sleeve working constants from SHA-256.
 __constant__ const uint dMD5K[64] = {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
