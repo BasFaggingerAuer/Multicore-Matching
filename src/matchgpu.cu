@@ -61,14 +61,14 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 	size_t uintGPUSize;
 	cudaGetSymbolSize(&uintGPUSize, dSelectBarrier);
 	//Set select barrier.
-	//if (cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, uintGPUSize) != cudaSuccess)
-	//{
-	//	cerr << "Unable to set selection barrier! " << cudaStatus << " " << selectBarrier << endl;
-	//	cerr << "barrier " << selectBarrier << "< UINT_MAX" << (selectBarrier < UINT_MAX) << endl;
-	//	cerr << "GPU size " << uintGPUSize << " CPU size" << sizeof(uint) << endl;
+	if (cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, uintGPUSize) != cudaSuccess)
+	{
+		cerr << "Unable to set selection barrier! " << cudaStatus << " " << selectBarrier << endl;
+		cerr << "barrier " << selectBarrier << "< UINT_MAX" << (selectBarrier < UINT_MAX) << endl;
+		cerr << "GPU size " << uintGPUSize << " CPU size" << sizeof(uint) << endl;
 
-	//	throw exception();
-	//}
+		throw exception();
+	}
 }
 
 GraphMatchingGPU::~GraphMatchingGPU()
