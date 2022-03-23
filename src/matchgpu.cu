@@ -59,8 +59,10 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 	cudaGetLastError();
 	int cudaStatus;
 	//Set select barrier.
-	int test = 123;
-	if (cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &test, sizeof(uint)) != cudaSuccess)
+	uint *dcoeffs;
+	cudaGetSymbolAddress((void **)&dcoeffs, dSelectBarrier);
+	
+	if (cudaStatus = cudaMemcpy(dcoeffs, selectBarrier, sizeof(uint), cudaMemcpyHostToDevice);) != cudaSuccess)
 	{
 		cerr << "Unable to set selection barrier! " << cudaStatus << " " << selectBarrier << endl;
 		cerr << "barrier " << selectBarrier << "< UINT_MAX" << (selectBarrier < UINT_MAX) << endl;
