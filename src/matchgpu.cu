@@ -223,18 +223,23 @@ __global__ void gSelect(int *colors, int *heads, int *tails, const int nrVertice
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
-	if (i >= nrVertices) return;
+	if (i >= nrVertices || colors[i] >= 3) return;
+
+	// Is this vertex a head or a tail? Else decolor
+	uint tail = tails[i];
+	uint head = heads[i];
+	bool singleton = (head == tail);
+	if ( head != i && tail != i) colors[i] = 3;
 
 	//Can this vertex still be matched?
-	if (colors[i] >= 2) return;
-
-	// Is this vertex a heads or tails? Else decolors
-	if (tails[i] != i && heads[i] != i) colors[i] = 2;
+	if (colors[i] >= 3) return;
 
 	//Start hashing.
 	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
 	uint a = h0, b = h1, c = h2, d = h3, e, f;
-	// colors heads and tails same colors.
+
+	// colors heads and tails same colors by using min as g.
+	// Hash color of set
 	uint g = min(tails[i], heads[i]);
 
 	for (int j = 0; j < 16; ++j)
@@ -255,7 +260,57 @@ __global__ void gSelect(int *colors, int *heads, int *tails, const int nrVertice
 		g *= random;
 	}
 	
-	colors[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
+	uint color = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
+	colors[i] = color;
+	// Singletons are made the right sense for their color to promote matching.
+	// Red(-) and Blue(+)
+	if (singleton){
+		sense[i] = color
+	}
+	else
+	{
+		// Hash sense
+		uint g = max(tails[i], heads[i]);
+		bool mask = (g == i);
+
+		for (int j = 0; j < 16; ++j)
+		{
+			f = (b & c) | ((~b) & d);
+
+			e = d;
+			d = c;
+			c = b;
+			b += LEFTROTATE(a + f + dMD5K[j] + g, dMD5R[j]);
+			a = e;
+
+			h0 += a;
+			h1 += b;
+			h2 += c;
+			h3 += d;
+
+			g *= random;
+		}
+		// Notice how in each case i and j have opposite senses.
+		// Truth Table to Check //
+		//                   
+		//     a    b    a^b
+		//C1
+		//i // 0    0    0   
+		//j // 0    1    1 
+		//C3
+		//i // 0    1    1   
+		//j // 0    0    0  
+		//C3
+		//i // 1    0    1   
+		//j // 1    1    0 
+		//C4
+		//i // 1    1    0   
+		//j // 1    0    1  
+		bool a = (bool)((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
+		bool b = mask;
+		//bool XOR(bool a, bool b)
+		sense[i] = (a + b) % 2;
+	}
 }
 
 __global__ void gaSelect(int *match, const int nrVertices, const uint random)
@@ -332,15 +387,22 @@ __global__ void gMatch(int *colors, int *heads, int *tails, int *linkedlists, co
 
 	const int r = requests[i];
 
-	//Only unmatched vertices make requests.
-	// Need to reset this every coarsening iteration
+	// Only unmatched vertices make requests.
+	// Need to reset this every coarsening iteration for head and tails?
 	if (r == nrVertices + 1)
 	{
-		//This is vertex without any available neighbours, discard it.
+		// This is vertex Blue(+) without any Blue or Red neighbors
+		// Discard it and flip sense.
+		colors[i] = 3;
+	}
+	// Only + can request -
+	else if (r == nrVertices + 2)
+	{
+		//This is a Blue(+) with only Red(+) neighbors, resense it.
 		colors[i] = 2;
 	}
-	// Only true if a R is neighbors with a B
-	// The pairing might have not occurred because of extra sense requirement
+	// Only true if a B+ is neighbors with a R- 
+	// The pairing might have not occurred because of competition.
 	else if (r < nrVertices)
 	{
 		// This vertex has made a valid request.
@@ -405,11 +467,72 @@ __global__ void grRequest(int *requests, const int *match, const int nrVertices)
 				dead = 0;
 			}
 		}
-
 		requests[i] = nrVertices + dead;
 	}
 	else
 	{
+		// If I'm red
+		//Clear request value.
+		requests[i] = nrVertices;
+	}
+}
+
+
+//==== Random greedy matching kernels ====
+__global__ void grRequest(int *requests, const int *match, const int *sense, const int *tails, const int nrVertices)
+{
+	//Let all blue (+) vertices make requests.
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+	
+	const int2 indices = tex1Dfetch(neighbourRangesTexture, i);
+
+	//Look at all blue (+) vertices and let them make requests.
+	if (match[i] == 0 && sense[i] == 0)
+	{
+		int noUnmatchedNeighborExists = 1;
+		int validSenseExistsInNeighborhood = 0;
+		int tail = tails[i];
+		for (int j = indices.x; j < indices.y; ++j)
+		{
+			const int ni = tex1Dfetch(neighboursTexture, j);
+			const int nm = match[ni];
+			// Prevents detecting the tail
+			// but I need an elegant transition
+			// From singletons to LL's..
+			// Prevents detecting internal negative 
+			// sense in 2-pair
+			// works for now..
+			if (tail == nm) continue;
+			//Do we have an unmatched neighbour?
+			// 0 : Blue; 1 : Red, 2 
+			// Blue or Red
+			if (nm < 4)
+			{
+				// Negative sense 
+				if (sense[ni] == 1){
+					validSenseExistsInNeighborhood = 2;
+					//Is this neighbour red?
+					if (nm == 1)
+					{
+						//Propose to this red(-) neighbour.
+						requests[i] = ni;
+						return;
+					}
+				}
+				// Neighbor is : [red(+) or blue(-)]
+				noUnmatchedNeighborExists = 0;
+			}
+		}
+		// N   -> Neighbors : [red(+), blue(-)] -> recolor
+		// N+1 -> No unmatched neighbors -> decolor
+		// N+2 -> Neighbors : [red(+)] -> Flip sense
+		requests[i] = nrVertices + noUnmatchedNeighborExists + validSenseExistsInNeighborhood;
+	}
+	else
+	{
+		// If I'm red or blue (-)
 		//Clear request value.
 		requests[i] = nrVertices;
 	}
@@ -433,6 +556,37 @@ __global__ void grRespond(int *requests, const int *match, const int nrVertices)
 
 			//Only respond to blue neighbours.
 			if (match[ni] == 0)
+			{
+				//Avoid data thrashing be only looking at the request value of blue neighbours.
+				if (requests[ni] == i)
+				{
+					requests[i] = ni;
+					return;
+				}
+			}
+		}
+	}
+}
+
+
+__global__ void grRespond(int *requests, const int *match, const int *sense, const int nrVertices)
+{
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+	
+	const int2 indices = tex1Dfetch(neighbourRangesTexture, i);
+
+	//Look at all red (-) vertices.
+	if (match[i] == 1 && sense[i] == 1)
+	{
+		//Select first available proposer.
+		for (int j = indices.x; j < indices.y; ++j)
+		{
+			const int ni = tex1Dfetch(neighboursTexture, j);
+
+			//Only respond to blue (+) neighbours.
+			if (match[ni] == 0 && sense[i] == 0)
 			{
 				//Avoid data thrashing be only looking at the request value of blue neighbours.
 				if (requests[ni] == i)
@@ -704,8 +858,8 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 	for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
 	{
 		gSelect<<<blocksPerGrid, threadsPerBlock>>>(dcolors, dheads, dtails, graph.nrVertices, rand());
-		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, graph.nrVertices);
-		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, graph.nrVertices);
+		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, dsense, graph.nrVertices);
+		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, dsense, graph.nrVertices);
 		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dcolors, dlinkedlists, dtails, drequests, graph.nrVertices);
 
 #ifdef MATCH_INTERMEDIATE_COUNT
