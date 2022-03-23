@@ -57,7 +57,7 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 		throw exception();
 	}
 	cudaGetLastError();
-	cudaError_t cudaStatus;
+	int cudaStatus;
 	//Set select barrier.
 	if (cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint)) != cudaSuccess)
 	{
