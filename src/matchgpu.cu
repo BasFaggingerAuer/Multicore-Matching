@@ -229,6 +229,11 @@ __global__ void gSelect(int *colors, int *heads, int *tails, const int nrVertice
 	uint tail = tails[i];
 	uint head = heads[i];
 	bool singleton = (head == tail);
+
+	// I changed the dead color from 2 to 3 so I can use 2 as a
+	// flag for don't rehash the sense, just flip it.
+	// might be better to just has the sense though.
+
 	if ( head != i && tail != i) colors[i] = 3;
 
 	//Can this vertex still be matched?
@@ -240,7 +245,7 @@ __global__ void gSelect(int *colors, int *heads, int *tails, const int nrVertice
 
 	// colors heads and tails same colors by using min as g.
 	// Hash color of set
-	uint g = min(tails[i], heads[i]);
+	uint g = min(tail, head);
 
 	for (int j = 0; j < 16; ++j)
 	{
@@ -265,12 +270,16 @@ __global__ void gSelect(int *colors, int *heads, int *tails, const int nrVertice
 	// Singletons are made the right sense for their color to promote matching.
 	// Red(-) and Blue(+)
 	if (singleton){
-		sense[i] = color
+		sense[i] = color;
 	}
 	else
 	{
+		// Currently sense is rehashed every iteration
+		// to prevent this use color==2 to prevent
+		// replace else with 
+		// else if (color != 2)
 		// Hash sense
-		uint g = max(tails[i], heads[i]);
+		uint g = max(tail, head);
 		bool mask = (g == i);
 
 		for (int j = 0; j < 16; ++j)
