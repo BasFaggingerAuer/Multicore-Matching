@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <device_functions.h>
+#include <cuda_runtime_api.h>
 
 //CUDA 3.2 does not seem to make definitions for texture types.
 #ifndef cudaTextureType1D
@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 using namespace mtc;
 
-__constant__ unsigned int dSelectBarrier[1] = 2293765939;
+__constant__ uint dSelectBarrier = 0x8000000;
 
 GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBlock, const unsigned int &_selectBarrier) :
 		threadsPerBlock(_threadsPerBlock),
@@ -56,18 +56,11 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 		cerr << "Unable to transfer graph data to device!" << endl;
 		throw exception();
 	}
-	cudaGetLastError();
-	cudaError_t cudaStatus;
-	size_t uintGPUSize;
-	cudaGetSymbolSize(&uintGPUSize, dSelectBarrier);
-	//Set select barrier.
-	cout << "cudaSuccess" << cudaSuccess;
-	if ((cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, uintGPUSize)) != cudaSuccess)
-	{
-		cerr << "Unable to set selection barrier! " << cudaStatus << " " << selectBarrier << endl;
-		cerr << "barrier " << selectBarrier << "< UINT_MAX" << (selectBarrier < UINT_MAX) << endl;
-		cerr << "GPU size " << uintGPUSize << " CPU size" << sizeof(uint) << endl;
 
+	//Set select barrier.
+	if (cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint)) != cudaSuccess)
+	{
+		cerr << "Unable to set selection barrier!" << endl;
 		throw exception();
 	}
 }
