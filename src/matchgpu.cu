@@ -56,13 +56,14 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 		cerr << "Unable to transfer graph data to device!" << endl;
 		throw exception();
 	}
-	cudaError_t cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint),0,cudaMemcpyHostToDevice);
+	/* This doesn't work on the grid with cuda 11.  use cuda 10! 
+		Kepler GPU's are deprecated in CUDA 11.
+		https://arnon.dk/tag/nvcc-flags/
+	*/
 	//Set select barrier.
-	if (cudaStatus != cudaSuccess)
+	if (cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint)) != cudaSuccess)
 	{
 		cerr << "Unable to set selection barrier!" << endl;
-		cerr << cudaStatus << endl;
-
 		throw exception();
 	}
 }
@@ -865,29 +866,35 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 #ifdef MATCH_INTERMEDIATE_COUNT
 	cout << "0\t0\t0" << endl;
 #endif
+	for (int lengthOfPath = 0; maxlength; ++lengthOfPath){
+		if (cudaMemset(dmatch, 0, sizeof(int)*graph.nrVertices) != cudaSuccess)
+		{
+			cerr << "Unable to clear matching on device!" << endl;
+			throw exception();
+		}
 
-	for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
-	{
-		gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, graph.nrVertices, rand());
-		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dtails, graph.nrVertices);
-		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
-		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, dlinkedlists, drequests, graph.nrVertices);
+		for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
+		{
+			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, graph.nrVertices, rand());
+			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dtails, graph.nrVertices);
+			grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
+			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, dlinkedlists, drequests, graph.nrVertices);
 
-#ifdef MATCH_INTERMEDIATE_COUNT
-		cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
+	#ifdef MATCH_INTERMEDIATE_COUNT
+			cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
+			
+			double weight = 0;
+			long size = 0;
+
+			getWeight(weight, size, match, graph);
+
+			cout << i + 1 << "\t" << weight << "\t" << size << endl;
+	#endif
+		}
 		
-		double weight = 0;
-		long size = 0;
-
-		getWeight(weight, size, match, graph);
-
-		cout << i + 1 << "\t" << weight << "\t" << size << endl;
-#endif
+		cudaEventRecord(t2, 0);
+		cudaEventSynchronize(t2);
 	}
-	
-	cudaEventRecord(t2, 0);
-	cudaEventSynchronize(t2);
-
 #ifndef NDEBUG
 	cudaError_t error;
 
