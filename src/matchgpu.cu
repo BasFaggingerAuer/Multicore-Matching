@@ -866,7 +866,8 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 #ifdef MATCH_INTERMEDIATE_COUNT
 	cout << "0\t0\t0" << endl;
 #endif
-	for (int lengthOfPath = 0; maxlength; ++lengthOfPath){
+	int maxlength = 3;
+	for (int lengthOfPath = 0; lengthOfPath <= maxlength; ++lengthOfPath){
 		if (cudaMemset(dmatch, 0, sizeof(int)*graph.nrVertices) != cudaSuccess)
 		{
 			cerr << "Unable to clear matching on device!" << endl;
