@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
-
+#include <device_functions.h>
 //CUDA 3.2 does not seem to make definitions for texture types.
 #ifndef cudaTextureType1D
 #define cudaTextureType1D 0x01
