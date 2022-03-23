@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 using namespace mtc;
 
-__device__ __constant_ uint dSelectBarrier = 0x8000000;
+__constant_ uint dSelectBarrier = 0x8000000;
 
 GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBlock, const unsigned int &_selectBarrier) :
 		threadsPerBlock(_threadsPerBlock),
