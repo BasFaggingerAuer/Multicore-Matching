@@ -217,7 +217,7 @@ __global__ void gSelect(int *match, const int nrVertices, const uint random)
 	match[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
 }
 
-__global__ void gSelect(int *colors, int *heads, int *tails, const int nrVertices, const uint random)
+__global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const int nrVertices, const uint random)
 {
 	//Determine blue and red groups using MD5 hashing.
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
@@ -388,7 +388,7 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 }
 
 
-__global__ void gMatch(int *colors, int *heads, int *tails, int *linkedlists, const int *requests, const int nrVertices)
+__global__ void gMatch(int *colors, int *sense, int *heads, int *tails, int *linkedlists, const int *requests, const int nrVertices)
 {
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -827,15 +827,15 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 	//Allocate necessary buffers on the device.
 	// dlinkedlists - to generalize matching to n edges
 	// dtails - to quickly flip sense of strand
-	// dcolors - same as singleton implementation
+	// dmatch - same as singleton implementation
 	// dsense - indicates directionality of strand
-	int *dlinkedlists, *dheads, *dtails, *dcolors, *drequests, *dsense;
+	int *dlinkedlists, *dheads, *dtails, *dmatch, *drequests, *dsense;
 
 	if (cudaMalloc(&dlinkedlists, sizeof(int)*graph.nrVertices) != cudaSuccess
 			|| cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess
 				|| cudaMalloc(&dheads, sizeof(int)*graph.nrVertices) != cudaSuccess
 					|| cudaMalloc(&dtails, sizeof(int)*graph.nrVertices) != cudaSuccess
-						|| cudaMalloc(&dcolors, sizeof(int)*graph.nrVertices) != cudaSuccess
+						|| cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess
 							|| cudaMalloc(&dsense, sizeof(int)*graph.nrVertices) != cudaSuccess)
 	{
 		cerr << "Not enough memory on device!" << endl;
@@ -866,10 +866,10 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 
 	for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
 	{
-		gSelect<<<blocksPerGrid, threadsPerBlock>>>(dcolors, dheads, dtails, graph.nrVertices, rand());
-		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, dsense, graph.nrVertices);
-		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dcolors, dsense, graph.nrVertices);
-		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dcolors, dlinkedlists, dtails, drequests, graph.nrVertices);
+		gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, graph.nrVertices, rand());
+		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dtails, graph.nrVertices);
+		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
+		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dlinkedlists, dtails, drequests, graph.nrVertices);
 
 #ifdef MATCH_INTERMEDIATE_COUNT
 		cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
