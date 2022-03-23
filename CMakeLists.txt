@@ -22,7 +22,7 @@ find_package(TBB REQUIRED)
 #set(CMAKE_CXX_FLAGS "-O2 -g -Wall -Wextra -Wshadow -Werror -ansi")
 set(CMAKE_CXX_FLAGS "-O3 -Wall -ffast-math -DNDEBUG")
 #set(CUDA_NVCC_FLAGS -g -G)
-set(CUDA_NVCC_FLAGS -Xptxas -dlcm=cg)
+#set(CUDA_NVCC_FLAGS -Xptxas -dlcm=cg)
 
 add_subdirectory(${MATCH_SOURCE_DIR}/src/)
 add_subdirectory(${MATCH_SOURCE_DIR}/bin/)
