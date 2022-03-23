@@ -10,7 +10,9 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 add_executable(match match.cpp)
 set_target_properties(match PROPERTIES
-        CUDA_ARCHITECTURES "37")
+        CUDA_ARCHITECTURES "37"
+        CUDA_ARCHITECTURES "35;37;60;70;80"
+        COMPILE_FLAGS "arch=compute_37,code=sm_37 -gencode arch=compute_37,code=sm_37")
 target_link_libraries(match ${CUDA_LIBRARY} cuda)
 target_link_libraries(match ${TBB_LIBRARY})
 target_link_libraries(match ${Boost_LIBRARIES})
