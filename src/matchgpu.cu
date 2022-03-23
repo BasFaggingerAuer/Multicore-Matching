@@ -869,7 +869,7 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 		gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, graph.nrVertices, rand());
 		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dtails, graph.nrVertices);
 		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
-		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dlinkedlists, dtails, drequests, graph.nrVertices);
+		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, dlinkedlists, drequests, graph.nrVertices);
 
 #ifdef MATCH_INTERMEDIATE_COUNT
 		cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
