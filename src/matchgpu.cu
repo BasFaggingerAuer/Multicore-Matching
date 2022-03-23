@@ -60,7 +60,7 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 	//Set select barrier.
 	if (errType = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint)) != cudaSuccess)
 	{
-		cerr << "Unable to set selection barrier! " << errType << " " << selectBarrier << endl;
+		cerr << "Unable to set selection barrier! " << errType << " " << selectBarrier << cudaGetSymbolSize(dSelectBarrier) <<  endl;
 		throw exception();
 	}
 }
