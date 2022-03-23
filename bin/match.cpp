@@ -40,8 +40,6 @@ using namespace std;
 using namespace tbb;
 using namespace mtc;
 
-__constant__ uint dSelectBarrier = 0x8000000;
-
 void initCUDA(CUdevice &device, int &nrThreads, const int &deviceIndex, const int &nrVertices)
 {
 	//Initialise CUDA.
