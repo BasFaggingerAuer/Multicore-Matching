@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 using namespace mtc;
 
-__constant__ uint dSelectBarrier = 0x8000000;
+__constant__ unsigned int dSelectBarrier = 2293765939;
 
 GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBlock, const unsigned int &_selectBarrier) :
 		threadsPerBlock(_threadsPerBlock),
@@ -57,18 +57,18 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 		throw exception();
 	}
 	cudaGetLastError();
-	int errType = 0;
+	cudaError_t cudaStatus;
 	size_t uintGPUSize;
 	cudaGetSymbolSize(&uintGPUSize, dSelectBarrier);
 	//Set select barrier.
-	if (errType = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, uintGPUSize) != cudaSuccess)
-	{
-		cerr << "Unable to set selection barrier! " << errType << " " << selectBarrier << endl;
-		cerr << "barrier " << selectBarrier << "< UINT_MAX" << (selectBarrier < UINT_MAX) << endl;
-		cerr << "GPU size " << uintGPUSize << " CPU size" << sizeof(uint) << endl;
+	//if (cudaStatus = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, uintGPUSize) != cudaSuccess)
+	//{
+	//	cerr << "Unable to set selection barrier! " << cudaStatus << " " << selectBarrier << endl;
+	//	cerr << "barrier " << selectBarrier << "< UINT_MAX" << (selectBarrier < UINT_MAX) << endl;
+	//	cerr << "GPU size " << uintGPUSize << " CPU size" << sizeof(uint) << endl;
 
-		throw exception();
-	}
+	//	throw exception();
+	//}
 }
 
 GraphMatchingGPU::~GraphMatchingGPU()
