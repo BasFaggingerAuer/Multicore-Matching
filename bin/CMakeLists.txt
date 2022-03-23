@@ -7,7 +7,8 @@ find_package(Boost COMPONENTS iostreams program_options REQUIRED)
 
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
-
+export CC="/wsu/el7/gnu9/9.1.0/root/usr/bin/gcc"
+export CXX="/wsu/el7/gnu9/9.1.0/root/usr/bin/g++"
 add_executable(match match.cpp)
 #set_target_properties(match PROPERTIES
 #        CUDA_ARCHITECTURES "35;37;60;70;80")
