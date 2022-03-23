@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 using namespace mtc;
 
-__constant__ uint dSelectBarrier = 0x8000000;
+__device__ __constant_ uint dSelectBarrier = 0x8000000;
 
 GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBlock, const unsigned int &_selectBarrier) :
 		threadsPerBlock(_threadsPerBlock),
@@ -58,8 +58,10 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 	}
 	cudaGetLastError();
 	int errType = 0;
+	void * dSelectBarrierAddress;
+	cudaGetSymbolAddress(&dSelectBarrierAddress, dSelectBarrier);
 	//Set select barrier.
-	if (errType = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(dSelectBarrier)) != cudaSuccess)
+	if (errType = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint)) != cudaSuccess)
 	{
 		cerr << "Unable to set selection barrier! " << errType << " " << selectBarrier << endl;
 		cerr << "barrier " << selectBarrier << "< UINT_MAX" << (selectBarrier < UINT_MAX) << endl;
