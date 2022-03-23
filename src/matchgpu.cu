@@ -56,11 +56,11 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 		cerr << "Unable to transfer graph data to device!" << endl;
 		throw exception();
 	}
-
+	int errType = 0;
 	//Set select barrier.
-	if (cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint)) != cudaSuccess)
+	if (errType = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint)) != cudaSuccess)
 	{
-		cerr << "Unable to set selection barrier!" << endl;
+		cerr << "Unable to set selection barrier! " errType << endl;
 		throw exception();
 	}
 }
