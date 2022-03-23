@@ -35,7 +35,6 @@ using namespace std;
 using namespace mtc;
 
 __constant__ uint dSelectBarrier = 0x8000000;
-__constant__ size_t duintsize = sizeof(uint);
 
 GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBlock, const unsigned int &_selectBarrier) :
 		threadsPerBlock(_threadsPerBlock),
@@ -57,11 +56,13 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 		cerr << "Unable to transfer graph data to device!" << endl;
 		throw exception();
 	}
+	cudaGetLastError();
 	int errType = 0;
 	//Set select barrier.
 	if (errType = cudaMemcpyToSymbol(dSelectBarrier, &selectBarrier, sizeof(uint)) != cudaSuccess)
 	{
-		cerr << "Unable to set selection barrier! " << errType << " " << selectBarrier << cudaGetSymbolSize(&duintsize, dSelectBarrier) <<  endl;
+		cerr << "Unable to set selection barrier! " << errType << " " << selectBarrier << endl;
+		cudaGetLastError();
 		throw exception();
 	}
 }
