@@ -853,11 +853,11 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 
 	thrust::device_vector<int>H(_graph.nrVertices);
 	thrust::sequence(H.begin(),H.end());
-	dheads = thrust::raw_pointer_cast(H.data());
+	dheads = thrust::raw_pointer_cast(&H[0]);
 	
 	thrust::device_vector<int>T(_graph.nrVertices);
 	thrust::sequence(T.begin(),T.end());
-	dtails = thrust::raw_pointer_cast(T.data());
+	dtails = thrust::raw_pointer_cast(&T[0]);
 	// Working :)
 	//cout << "Heads:" << endl;
 	//thrust::copy(H.begin(),H.end(),std::ostream_iterator<int>(std::cout,"\n"));
