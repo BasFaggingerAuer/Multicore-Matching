@@ -33,7 +33,9 @@ class GraphMatchingGPU : public GraphMatching
 		virtual ~GraphMatchingGPU();
 		
 		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const = 0;
-		virtual void performMatchingGeneral(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const {}
+		virtual void performMatchingGeneral(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const {
+			std::cout << "Empty method base class" << std::endl;
+		}
 
 	protected:
 		const int threadsPerBlock;

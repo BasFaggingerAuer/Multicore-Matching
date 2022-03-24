@@ -801,6 +801,7 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 {
 	//Creates a greedy random matching on the GPU.
 	//Assumes the current matching is empty.
+	std::cout << "Specialized method derived class" << std::endl;
 
 	assert((int)match.size() == graph.nrVertices);
 	
