@@ -152,18 +152,6 @@ GraphMatchingGPUWeightedMaximal::~GraphMatchingGPUWeightedMaximal()
 GraphMatchingGeneralGPURandom::GraphMatchingGeneralGPURandom(const Graph &_graph, const int &_nrThreads, const unsigned int &_selectBarrier) :
 		GraphMatchingGPU(_graph, _nrThreads, _selectBarrier)
 {
-	thrust::device_vector<int>H(_graph.nrVertices);
-	thrust::sequence(H.begin(),H.end());
-	dheads = thrust::raw_pointer_cast(H.data());
-	
-	thrust::device_vector<int>T(_graph.nrVertices);
-	thrust::sequence(T.begin(),T.end());
-	dtails = thrust::raw_pointer_cast(T.data());
-	// Working :)
-	//cout << "Heads:" << endl;
-	//thrust::copy(H.begin(),H.end(),std::ostream_iterator<int>(std::cout,"\n"));
-	//cout << "Tails:" << endl;
-	//thrust::copy(T.begin(),T.end(),std::ostream_iterator<int>(std::cout,"\n"));
 
 }
 
@@ -849,7 +837,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	// dtails - to quickly flip sense of strand
 	// dmatch - same as singleton implementation
 	// dsense - indicates directionality of strand
-	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense;
+	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense, *dheads, *dtails;
 
 	if (cudaMalloc(&dforwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&dbackwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
@@ -862,6 +850,20 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 		cerr << "Not enough memory on device!" << endl;
 		throw exception();
 	}
+
+	thrust::device_vector<int>H(_graph.nrVertices);
+	thrust::sequence(H.begin(),H.end());
+	dheads = thrust::raw_pointer_cast(H.data());
+	
+	thrust::device_vector<int>T(_graph.nrVertices);
+	thrust::sequence(T.begin(),T.end());
+	dtails = thrust::raw_pointer_cast(T.data());
+	// Working :)
+	//cout << "Heads:" << endl;
+	//thrust::copy(H.begin(),H.end(),std::ostream_iterator<int>(std::cout,"\n"));
+	//cout << "Tails:" << endl;
+	//thrust::copy(T.begin(),T.end(),std::ostream_iterator<int>(std::cout,"\n"));
+
 
 	//Clear matching.
 	if (cudaMemset(dforwardlinkedlist, 0, sizeof(int)*graph.nrVertices) != cudaSuccess ||

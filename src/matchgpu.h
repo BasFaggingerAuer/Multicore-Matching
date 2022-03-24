@@ -63,8 +63,6 @@ class GraphMatchingGeneralGPURandom : public GraphMatchingGPU
 		
 		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
 	
-	private:
-		int *dheads, *dtails;
 };
 
 class GraphMatchingGPURandomMaximal : public GraphMatchingGPU
