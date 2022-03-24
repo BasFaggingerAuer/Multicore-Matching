@@ -231,13 +231,13 @@ __global__ void gSelect(int *match, const int nrVertices, const uint random)
 	match[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
 }
 
-__global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const int nrVertices, const uint random)
+__global__ void gSelect(int *match, int *sense, int *heads, int *tails, const int nrVertices, const uint random)
 {
 	//Determine blue and red groups using MD5 hashing.
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
-	if (i >= nrVertices || colors[i] >= 2) return;
+	if (i >= nrVertices || match[i] >= 2) return;
 
 	// Is this vertex a head or a tail? Else decolor
 	uint tail = tails[i];
@@ -246,16 +246,16 @@ __global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const i
 	//if (threadIdx.x == 0)
 	//printf("vertex %d head %d, tail %d\n", i, head, tail);
 
-	if ( head != i && tail != i) colors[i] = 2;
+	if ( head != i && tail != i) match[i] = 2;
 
 	//Can this vertex still be matched?
-	if (colors[i] >= 2) return;
+	if (match[i] >= 2) return;
 
 	//Start hashing.
 	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
 	uint a = h0, b = h1, c = h2, d = h3, e, f;
 
-	// colors heads and tails same colors by using min as g.
+	// match heads and tails same match by using min as g.
 	// Hash color of set
 	uint g = min(tail, head);
 
@@ -278,7 +278,7 @@ __global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const i
 	}
 	
 	uint color = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
-	colors[i] = color;
+	match[i] = color;
 	// Singletons are made the right sense for their color to promote matching.
 	// Red(-) and Blue(+)
 	if (singleton){
@@ -402,7 +402,7 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 }
 
 
-__global__ void gMatch(int *colors, int *sense, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
+__global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
 {
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -416,7 +416,7 @@ __global__ void gMatch(int *colors, int *sense, int *heads, int *tails, int *fli
 	{
 		// This is vertex Blue(+) without any Blue or Red neighbors
 		// Discard it and flip sense.
-		colors[i] = 2;
+		match[i] = 2;
 	}
 	// Only true if a B+ is neighbors with a R- 
 	// The pairing might have not occurred because of competition.
@@ -436,12 +436,12 @@ __global__ void gMatch(int *colors, int *sense, int *heads, int *tails, int *fli
 				// Update head
 				heads[i] = heads[r];
 				// tails[i] isn't thread-sensitive since I am the (+) end
-				colors[heads[i]] = 4 + min(heads[i], tails[i]);
+				match[heads[i]] = 4 + min(heads[i], tails[i]);
 			} else {
 				// Negative sense, update head
 				tails[i] = tails[r];
 				// heads[i] isn't thread-sensitive since I am the (-) end
-				colors[tails[i]] = 4 + min(heads[i], tails[i]);
+				match[tails[i]] = 4 + min(heads[i], tails[i]);
 			}
 			flinkedlist[i] = r;
 			blinkedlist[r] = i;
@@ -842,9 +842,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	// dsense - indicates directionality of strand
 	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense, *dheads, *dtails;
 
-	if (cudaMalloc(&dforwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
-		cudaMalloc(&dbackwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
-		cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
+	if (cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
 		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&dsense, sizeof(int)*graph.nrVertices) != cudaSuccess)
 	{
@@ -859,6 +857,14 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::device_vector<int>T(graph.nrVertices);
 	thrust::sequence(T.begin(),T.end());
 	dtails = thrust::raw_pointer_cast(&T[0]);
+
+	thrust::device_vector<int>fll(graph.nrVertices);
+	thrust::sequence(fll.begin(),fll.end());
+	dforwardlinkedlist = thrust::raw_pointer_cast(&fll[0]);
+	
+	thrust::device_vector<int>bll(graph.nrVertices);
+	thrust::sequence(bll.begin(),bll.end());
+	dbackwardlinkedlist = thrust::raw_pointer_cast(&bll[0]);
 
 	//Clear matching.
 	if (cudaMemset(dforwardlinkedlist, 0, sizeof(int)*graph.nrVertices) != cudaSuccess ||
@@ -885,7 +891,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	int maxlength = 3;
 	for (int lengthOfPath = 0; lengthOfPath < maxlength; ++lengthOfPath){
 		// The inner loop methods generalize from singletons to linked lists of any length
-		// Therefore, all we need to do is reset the colors repeat the inner loop.
+		// Therefore, all we need to do is reset the match repeat the inner loop.
 		// Each inner loop call adds at most one edge to a path.
 		// However, after the first inner loop call, which is guarunteed
 		// to match at least half the graph, success is random.
