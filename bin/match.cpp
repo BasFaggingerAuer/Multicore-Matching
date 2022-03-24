@@ -146,9 +146,9 @@ GraphMatching *getMatcher(const Graph &graph, const int &type, const int &nrThre
 	else if (type ==  7) return new GraphMatchingGPURandomMaximal(graph, nrThreads, barrier);
 	else if (type ==  8) return new GraphMatchingGPUWeighted(graph, nrThreads, barrier);
 	else if (type ==  9) return new GraphMatchingGPUWeightedMaximal(graph, nrThreads, barrier);
-	else if (type == 10) return new GraphMatchingTBBRandom(graph, barrier);
-	else if (type == 11) return new GraphMatchingTBBWeighted(graph, barrier);
-	else if (type == 12 )return new GraphMatchingGeneralGPURandom(graph, nrThreads, barrier);
+	else if (type == 10) return new GraphMatchingGeneralGPURandom(graph, nrThreads, barrier);
+	else if (type == 11) return new GraphMatchingTBBRandom(graph, barrier);
+	else if (type == 12) return new GraphMatchingTBBWeighted(graph, barrier);
 	else
 	{
 		cerr << "Unknown matching type!" << endl;
