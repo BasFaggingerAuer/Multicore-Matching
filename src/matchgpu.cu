@@ -943,8 +943,6 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	}
 
 	//Free memory.
-	cudaFree(dforwardlinkedlist);
-	cudaFree(dbackwardlinkedlist);
 	cudaFree(drequests);
 	cudaFree(dmatch);
 	cudaFree(dsense);
