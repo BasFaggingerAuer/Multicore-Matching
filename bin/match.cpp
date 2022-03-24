@@ -222,9 +222,9 @@ int main(int argc, char **argv)
 		 "7  = GPU maximal random,\n"
 		 "8  = GPU weighted,\n"
 		 "9  = GPU maximal weighted,\n"
-		 "10 = TBB random,\n"
-		 "11 = TBB weighted,\n"
-		 "12 = GPU Generalized random.");
+		 "10 = GPU random generalized ,\n"
+		 "11 = TBB random,\n"
+		 "12 = TBB weighted.");
 		
 		boost::program_options::positional_options_description pos;
 		
@@ -367,7 +367,7 @@ int main(int argc, char **argv)
 		for (set<int>::const_iterator j = CPUNrThreads.begin(); j != CPUNrThreads.end(); ++j)
 		{
 			//Are we using TBB?
-			const bool usingTBB = (*i >= 10);
+			const bool usingTBB = (*i >= 11);
 			
 			//Setup task scheduler.
 			task_scheduler_init tbbScheduler(*j);
