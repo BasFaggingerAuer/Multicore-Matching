@@ -333,7 +333,7 @@ __global__ void gSelect(int *match, int *sense, int *heads, int *tails, const in
 		sense[i] = (a + b) % 2;
 	}
 	//if (threadIdx.x == 0)
-	printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
+	//printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
 }
 
 __global__ void gaSelect(int *match, const int nrVertices, const uint random)
