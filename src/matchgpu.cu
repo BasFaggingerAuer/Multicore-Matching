@@ -445,7 +445,7 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 			}
 			flinkedlist[i] = r;
 			blinkedlist[r] = i;
-			printf("SUCCESS\n");
+			//printf("SUCCESS\n");
 		}
 	}
 }
@@ -538,7 +538,7 @@ __global__ void grRequest(int *requests, const int *match, const int *sense, con
 					{
 						//Propose to this red(-) neighbour.
 						requests[i] = ni;
-						printf("I %d requested %d\n", i, ni);
+						//printf("I %d requested %d\n", i, ni);
 						return;
 					}
 				}
@@ -613,7 +613,7 @@ __global__ void grRespond(int *requests, const int *match, const int *sense, con
 				if (requests[ni] == i)
 				{
 					requests[i] = ni;
-					printf("I %d responded to %d\n", i, ni);
+					//printf("I %d responded to %d\n", i, ni);
 					return;
 				}
 			}
