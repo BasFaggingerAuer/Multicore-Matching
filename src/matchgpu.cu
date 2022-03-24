@@ -149,6 +149,17 @@ GraphMatchingGPUWeightedMaximal::~GraphMatchingGPUWeightedMaximal()
 	cudaFree(dweights);
 }
 
+GraphMatchingGeneralGPURandom::GraphMatchingGeneralGPURandom(const Graph &_graph, const int &_nrThreads, const unsigned int &_selectBarrier) :
+		GraphMatchingGPU(_graph, _nrThreads, _selectBarrier)
+{
+
+}
+
+GraphMatchingGeneralGPURandom::~GraphMatchingGeneralGPURandom()
+{
+
+}
+
 //==== Kernel variables ====
 __device__ int dkeepMatching;
 
