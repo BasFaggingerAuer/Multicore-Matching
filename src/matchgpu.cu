@@ -56,7 +56,7 @@ GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBl
 		cerr << "Unable to transfer graph data to device!" << endl;
 		throw exception();
 	}
-	/* This doesn't work on the grid with cuda 11.  use cuda 10! 
+	/* This doesn't work on a K40m with cuda 11.  use cuda 10! 
 		Kepler GPU's are deprecated in CUDA 11.
 		https://arnon.dk/tag/nvcc-flags/
 	*/
@@ -876,7 +876,7 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 		for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
 		{
 			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, graph.nrVertices, rand());
-			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dtails, graph.nrVertices);
+			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices);
 			grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
 			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, 
 														dforwardlinkedlist, dbackwardlinkedlist, 
