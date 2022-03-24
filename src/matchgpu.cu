@@ -445,6 +445,7 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 			}
 			flinkedlist[i] = r;
 			blinkedlist[r] = i;
+			printf("SUCCESS\n");
 		}
 	}
 }
