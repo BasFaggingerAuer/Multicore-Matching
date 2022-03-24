@@ -243,7 +243,7 @@ __global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const i
 	uint tail = tails[i];
 	uint head = heads[i];
 	bool singleton = (head == tail);
-	printf("head %d, tail %d\n", head, tail);
+	printf("vertex %d head %d, tail %d\n", i, head, tail);
 
 	if ( head != i && tail != i) colors[i] = 2;
 
@@ -331,6 +331,7 @@ __global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const i
 		//bool XOR(bool a, bool b)
 		sense[i] = (a + b) % 2;
 	}
+	printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
 }
 
 __global__ void gaSelect(int *match, const int nrVertices, const uint random)
@@ -841,9 +842,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 
 	if (cudaMalloc(&dforwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&dbackwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
-		cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess || 
-		//cudaMalloc(&dheads, sizeof(int)*graph.nrVertices) != cudaSuccess || 
-		//cudaMalloc(&dtails, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
 		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&dsense, sizeof(int)*graph.nrVertices) != cudaSuccess)
 	{
@@ -858,12 +857,6 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::device_vector<int>T(graph.nrVertices);
 	thrust::sequence(T.begin(),T.end());
 	dtails = thrust::raw_pointer_cast(&T[0]);
-	// Working :)
-	//cout << "Heads:" << endl;
-	//thrust::copy(H.begin(),H.end(),std::ostream_iterator<int>(std::cout,"\n"));
-	//cout << "Tails:" << endl;
-	//thrust::copy(T.begin(),T.end(),std::ostream_iterator<int>(std::cout,"\n"));
-
 
 	//Clear matching.
 	if (cudaMemset(dforwardlinkedlist, 0, sizeof(int)*graph.nrVertices) != cudaSuccess ||
@@ -942,8 +935,11 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	}
 
 	//Free memory.
+	cudaFree(dforwardlinkedlist);
+	cudaFree(dbackwardlinkedlist);
 	cudaFree(drequests);
 	cudaFree(dmatch);
+	cudaFree(dsense);
 	cudaUnbindTexture(neighboursTexture);
 	cudaUnbindTexture(neighbourRangesTexture);
 }
