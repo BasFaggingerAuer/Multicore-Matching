@@ -243,6 +243,7 @@ __global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const i
 	uint tail = tails[i];
 	uint head = heads[i];
 	bool singleton = (head == tail);
+	if (threadIdx.x == 0)
 	printf("vertex %d head %d, tail %d\n", i, head, tail);
 
 	if ( head != i && tail != i) colors[i] = 2;
@@ -331,6 +332,7 @@ __global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const i
 		//bool XOR(bool a, bool b)
 		sense[i] = (a + b) % 2;
 	}
+	if (threadIdx.x == 0)
 	printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
 }
 
