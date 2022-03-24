@@ -223,7 +223,8 @@ int main(int argc, char **argv)
 		 "8  = GPU weighted,\n"
 		 "9  = GPU maximal weighted,\n"
 		 "10 = TBB random,\n"
-		 "11 = TBB weighted.");
+		 "11 = TBB weighted,\n"
+		 "12 = GPU Generalized random.");
 		
 		boost::program_options::positional_options_description pos;
 		
