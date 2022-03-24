@@ -154,10 +154,11 @@ GraphMatchingGeneralGPURandom::GraphMatchingGeneralGPURandom(const Graph &_graph
 {
 	thrust::device_vector<int>H(_graph.nrVertices);
 	thrust::sequence(H.begin(),H.end());
-	global_colors = thrust::raw_pointer_cast(H.data());
+	dheads = thrust::raw_pointer_cast(H.data());
+	
 	thrust::device_vector<int>T(_graph.nrVertices);
 	thrust::sequence(T.begin(),T.end());
-	global_colors = thrust::raw_pointer_cast(T.data());
+	dtails = thrust::raw_pointer_cast(T.data());
 
 }
 
