@@ -159,10 +159,11 @@ GraphMatchingGeneralGPURandom::GraphMatchingGeneralGPURandom(const Graph &_graph
 	thrust::device_vector<int>T(_graph.nrVertices);
 	thrust::sequence(T.begin(),T.end());
 	dtails = thrust::raw_pointer_cast(T.data());
-	cout << "Heads:" << endl;
-	thrust::copy(H.begin(),H.end(),std::ostream_iterator<int>(std::cout,"\n"));
-	cout << "Tails:" << endl;
-	thrust::copy(T.begin(),T.end(),std::ostream_iterator<int>(std::cout,"\n"));
+	// Working :)
+	//cout << "Heads:" << endl;
+	//thrust::copy(H.begin(),H.end(),std::ostream_iterator<int>(std::cout,"\n"));
+	//cout << "Tails:" << endl;
+	//thrust::copy(T.begin(),T.end(),std::ostream_iterator<int>(std::cout,"\n"));
 
 }
 
@@ -254,6 +255,7 @@ __global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const i
 	uint tail = tails[i];
 	uint head = heads[i];
 	bool singleton = (head == tail);
+	printf("head %d, tail %d\n", head, tail);
 
 	if ( head != i && tail != i) colors[i] = 2;
 
