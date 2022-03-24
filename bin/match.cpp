@@ -418,7 +418,8 @@ int main(int argc, char **argv)
 					
 					match = matcher->initialMatching();
 					matcher->performMatching(match, t1, t2);
-				
+					matcher->performMatchingGeneral(match, t1, t2);
+
 					delete matcher;
 				}
 				catch (exception &e)
