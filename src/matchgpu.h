@@ -23,6 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "graph.h"
 #include "matchcpu.h"
 
+// For generalized MM heads & tails
+#include<thrust/device_vector.h>
+#include<thrust/sequence.h>
+
 namespace mtc
 {
 
@@ -58,6 +62,9 @@ class GraphMatchingGeneralGPURandom : public GraphMatchingGPU
 		~GraphMatchingGeneralGPURandom();
 		
 		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+	
+	private:
+		int *dheads, *dtails;
 };
 
 class GraphMatchingGPURandomMaximal : public GraphMatchingGPU

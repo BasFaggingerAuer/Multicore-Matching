@@ -152,6 +152,12 @@ GraphMatchingGPUWeightedMaximal::~GraphMatchingGPUWeightedMaximal()
 GraphMatchingGeneralGPURandom::GraphMatchingGeneralGPURandom(const Graph &_graph, const int &_nrThreads, const unsigned int &_selectBarrier) :
 		GraphMatchingGPU(_graph, _nrThreads, _selectBarrier)
 {
+	thrust::device_vector<int>H(_graph.nrVertices);
+	thrust::sequence(H.begin(),H.end());
+	global_colors = thrust::raw_pointer_cast(H.data());
+	thrust::device_vector<int>T(_graph.nrVertices);
+	thrust::sequence(T.begin(),T.end());
+	global_colors = thrust::raw_pointer_cast(T.data());
 
 }
 
@@ -836,13 +842,13 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	// dtails - to quickly flip sense of strand
 	// dmatch - same as singleton implementation
 	// dsense - indicates directionality of strand
-	int *dforwardlinkedlist, *dbackwardlinkedlist, *dheads, *dtails, *dmatch, *drequests, *dsense;
+	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense;
 
 	if (cudaMalloc(&dforwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&dbackwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess || 
-		cudaMalloc(&dheads, sizeof(int)*graph.nrVertices) != cudaSuccess || 
-		cudaMalloc(&dtails, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		//cudaMalloc(&dheads, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		//cudaMalloc(&dtails, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&dsense, sizeof(int)*graph.nrVertices) != cudaSuccess)
 	{
