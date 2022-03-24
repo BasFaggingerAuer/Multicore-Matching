@@ -226,21 +226,17 @@ __global__ void gSelect(int *colors, int *sense, int *heads, int *tails, const i
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
-	if (i >= nrVertices || colors[i] >= 3) return;
+	if (i >= nrVertices || colors[i] >= 2) return;
 
 	// Is this vertex a head or a tail? Else decolor
 	uint tail = tails[i];
 	uint head = heads[i];
 	bool singleton = (head == tail);
 
-	// I changed the dead color from 2 to 3 so I can use 2 as a
-	// flag for don't rehash the sense, just flip it.
-	// might be better to just has the sense though.
-
-	if ( head != i && tail != i) colors[i] = 3;
+	if ( head != i && tail != i) colors[i] = 2;
 
 	//Can this vertex still be matched?
-	if (colors[i] >= 3) return;
+	if (colors[i] >= 2) return;
 
 	//Start hashing.
 	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
@@ -391,7 +387,7 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 }
 
 
-__global__ void gMatch(int *colors, int *sense, int *heads, int *tails, int *linkedlists, const int *requests, const int nrVertices)
+__global__ void gMatch(int *colors, int *sense, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
 {
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -405,12 +401,6 @@ __global__ void gMatch(int *colors, int *sense, int *heads, int *tails, int *lin
 	{
 		// This is vertex Blue(+) without any Blue or Red neighbors
 		// Discard it and flip sense.
-		colors[i] = 3;
-	}
-	// Only + can request -
-	else if (r == nrVertices + 2)
-	{
-		//This is a Blue(+) with only Red(+) neighbors, resense it.
 		colors[i] = 2;
 	}
 	// Only true if a B+ is neighbors with a R- 
@@ -430,17 +420,16 @@ __global__ void gMatch(int *colors, int *sense, int *heads, int *tails, int *lin
 			if(sense[i]){ 
 				// Update head
 				heads[i] = heads[r];
+				// tails[i] isn't thread-sensitive since I am the (+) end
 				colors[heads[i]] = 4 + min(heads[i], tails[i]);
 			} else {
 				// Negative sense, update head
-				// Update my next to be my partner if I'm negative sense
-				// If I maintain a doubly LL, ll is updated for both directions.
-				linkedlists[i] = r;
-
 				tails[i] = tails[r];
-				// heads[r] isn't thread-sensitive
+				// heads[i] isn't thread-sensitive since I am the (-) end
 				colors[tails[i]] = 4 + min(heads[i], tails[i]);
 			}
+			flinkedlist[i] = r;
+			blinkedlist[r] = i;
 		}
 	}
 }
@@ -491,7 +480,7 @@ __global__ void grRequest(int *requests, const int *match, const int nrVertices)
 
 
 //==== Random greedy matching kernels ====
-__global__ void grRequest(int *requests, const int *match, const int *sense, const int *tails, const int nrVertices)
+__global__ void grRequest(int *requests, const int *match, const int *sense, const int *forwardlinkedlist, const int *backwardlinkedlist, const int nrVertices)
 {
 	//Let all blue (+) vertices make requests.
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -504,19 +493,23 @@ __global__ void grRequest(int *requests, const int *match, const int *sense, con
 	if (match[i] == 0 && sense[i] == 0)
 	{
 		int noUnmatchedNeighborExists = 1;
-		int validSenseExistsInNeighborhood = 0;
-		int tail = tails[i];
+		// One of these must be myself and the other might be myself (singleton)
+		// Since I allow quick sense flipping, it is unclear whether head->me or tail->me
+		// All that is known is I am either head or tail and at most one one my neighbors
+		// can be in my matching.  Therefore, just check each neighbor against both directions.
+		const int nf = forwardlinkedlist[i];
+		const int nb = backwardlinkedlist[i];		
 		for (int j = indices.x; j < indices.y; ++j)
 		{
 			const int ni = tex1Dfetch(neighboursTexture, j);
+			// Prevents matching an already matched neighbor
+			// We would never successfully rematch
+			// but the "noUnmatchedNeighborExists" 
+			// flag will never be set for pairs
+			// without this continue statement.
+			// r+.-r-, b+.b-; there is a colored neighbor.
+			if (nf == ni || nb == ni) continue;
 			const int nm = match[ni];
-			// Prevents detecting the tail
-			// but I need an elegant transition
-			// From singletons to LL's..
-			// Prevents detecting internal negative 
-			// sense in 2-pair
-			// works for now..
-			if (tail == nm) continue;
 			//Do we have an unmatched neighbour?
 			// 0 : Blue; 1 : Red, 2 
 			// Blue or Red
@@ -524,7 +517,6 @@ __global__ void grRequest(int *requests, const int *match, const int *sense, con
 			{
 				// Negative sense 
 				if (sense[ni] == 1){
-					validSenseExistsInNeighborhood = 2;
 					//Is this neighbour red?
 					if (nm == 1)
 					{
@@ -539,8 +531,7 @@ __global__ void grRequest(int *requests, const int *match, const int *sense, con
 		}
 		// N   -> Neighbors : [red(+), blue(-)] -> recolor
 		// N+1 -> No unmatched neighbors -> decolor
-		// N+2 -> Neighbors : [red(+)] -> Flip sense
-		requests[i] = nrVertices + noUnmatchedNeighborExists + validSenseExistsInNeighborhood;
+		requests[i] = nrVertices + noUnmatchedNeighborExists;
 	}
 	else
 	{
@@ -596,7 +587,8 @@ __global__ void grRespond(int *requests, const int *match, const int *sense, con
 		for (int j = indices.x; j < indices.y; ++j)
 		{
 			const int ni = tex1Dfetch(neighboursTexture, j);
-
+			// Dont have to worry about evaluating already matched vertices
+			// Since these must be opposite color and sense.
 			//Only respond to blue (+) neighbours.
 			if (match[ni] == 0 && sense[i] == 0)
 			{
@@ -832,21 +824,23 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 	// dtails - to quickly flip sense of strand
 	// dmatch - same as singleton implementation
 	// dsense - indicates directionality of strand
-	int *dlinkedlists, *dheads, *dtails, *dmatch, *drequests, *dsense;
+	int *dforwardlinkedlist, *dbackwardlinkedlist, *dheads, *dtails, *dmatch, *drequests, *dsense;
 
-	if (cudaMalloc(&dlinkedlists, sizeof(int)*graph.nrVertices) != cudaSuccess
-			|| cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess
-				|| cudaMalloc(&dheads, sizeof(int)*graph.nrVertices) != cudaSuccess
-					|| cudaMalloc(&dtails, sizeof(int)*graph.nrVertices) != cudaSuccess
-						|| cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess
-							|| cudaMalloc(&dsense, sizeof(int)*graph.nrVertices) != cudaSuccess)
+	if (cudaMalloc(&dforwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		cudaMalloc(&dbackwardlinkedlist, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		cudaMalloc(&dheads, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		cudaMalloc(&dtails, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		cudaMalloc(&dsense, sizeof(int)*graph.nrVertices) != cudaSuccess)
 	{
 		cerr << "Not enough memory on device!" << endl;
 		throw exception();
 	}
 
 	//Clear matching.
-	if (cudaMemset(dlinkedlists, 0, sizeof(int)*graph.nrVertices) != cudaSuccess)
+	if (cudaMemset(dforwardlinkedlist, 0, sizeof(int)*graph.nrVertices) != cudaSuccess ||
+		cudaMemset(dbackwardlinkedlist, 0, sizeof(int)*graph.nrVertices))
 	{
 		cerr << "Unable to clear matching on device!" << endl;
 		throw exception();
@@ -867,7 +861,12 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 	cout << "0\t0\t0" << endl;
 #endif
 	int maxlength = 3;
-	for (int lengthOfPath = 0; lengthOfPath <= maxlength; ++lengthOfPath){
+	for (int lengthOfPath = 0; lengthOfPath < maxlength; ++lengthOfPath){
+		// The inner loop methods generalize from singletons to linked lists of any length
+		// Therefore, all we need to do is reset the colors repeat the inner loop.
+		// Each inner loop call adds at most one edge to a path.
+		// However, after the first inner loop call, which is guarunteed
+		// to match at least half the graph, success is random.
 		if (cudaMemset(dmatch, 0, sizeof(int)*graph.nrVertices) != cudaSuccess)
 		{
 			cerr << "Unable to clear matching on device!" << endl;
@@ -879,7 +878,9 @@ void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEven
 			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, graph.nrVertices, rand());
 			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dtails, graph.nrVertices);
 			grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
-			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, dlinkedlists, drequests, graph.nrVertices);
+			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, 
+														dforwardlinkedlist, dbackwardlinkedlist, 
+														drequests, graph.nrVertices);
 
 	#ifdef MATCH_INTERMEDIATE_COUNT
 			cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
