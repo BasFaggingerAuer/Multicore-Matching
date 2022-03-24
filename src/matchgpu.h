@@ -33,7 +33,8 @@ class GraphMatchingGPU : public GraphMatching
 		virtual ~GraphMatchingGPU();
 		
 		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const = 0;
-		
+		virtual void performMatchingGeneral(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const = 0;
+
 	protected:
 		const int threadsPerBlock;
 		const uint selectBarrier;
@@ -59,6 +60,7 @@ class GraphMatchingGPURandomMaximal : public GraphMatchingGPU
 		~GraphMatchingGPURandomMaximal();
 		
 		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatchingGeneral(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const {}
 };
 
 class GraphMatchingGPUWeighted : public GraphMatchingGPU
@@ -68,6 +70,7 @@ class GraphMatchingGPUWeighted : public GraphMatchingGPU
 		~GraphMatchingGPUWeighted();
 		
 		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatchingGeneral(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const {}
 
 	private:
 		int *dweights;
@@ -80,6 +83,7 @@ class GraphMatchingGPUWeightedMaximal : public GraphMatchingGPU
 		~GraphMatchingGPUWeightedMaximal();
 		
 		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatchingGeneral(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const {}
 
 	private:
 		int *dweights;
