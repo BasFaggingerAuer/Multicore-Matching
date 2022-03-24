@@ -607,7 +607,7 @@ __global__ void grRespond(int *requests, const int *match, const int *sense, con
 			// Dont have to worry about evaluating already matched vertices
 			// Since these must be opposite color and sense.
 			//Only respond to blue (+) neighbours.
-			if (match[ni] == 0 && sense[i] == 0)
+			if (match[ni] == 0 && sense[ni] == 0)
 			{
 				//Avoid data thrashing be only looking at the request value of blue neighbours.
 				if (requests[ni] == i)
