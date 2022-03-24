@@ -797,7 +797,7 @@ void GraphMatchingGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1
 	cudaUnbindTexture(neighbourRangesTexture);
 }
 
-void GraphMatchingGPURandom::performMatchingGeneral(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
+void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
 {
 	//Creates a greedy random matching on the GPU.
 	//Assumes the current matching is empty.

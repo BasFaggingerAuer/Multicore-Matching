@@ -148,6 +148,7 @@ GraphMatching *getMatcher(const Graph &graph, const int &type, const int &nrThre
 	else if (type ==  9) return new GraphMatchingGPUWeightedMaximal(graph, nrThreads, barrier);
 	else if (type == 10) return new GraphMatchingTBBRandom(graph, barrier);
 	else if (type == 11) return new GraphMatchingTBBWeighted(graph, barrier);
+	else if (type == 12 )return new GraphMatchingGeneralGPURandom(graph, nrThreads, barrier);
 	else
 	{
 		cerr << "Unknown matching type!" << endl;
@@ -418,7 +419,6 @@ int main(int argc, char **argv)
 					
 					match = matcher->initialMatching();
 					matcher->performMatching(match, t1, t2);
-					matcher->performMatchingGeneral(match, t1, t2);
 
 					delete matcher;
 				}
