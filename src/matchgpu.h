@@ -37,12 +37,6 @@ class GraphMatchingGPU : public GraphMatching
 		virtual ~GraphMatchingGPU();
 		
 		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const = 0;
-		void writeGraphViz(uint * match, 
-							thrust::device_vector<int> & fll, 
-							thrust::device_vector<int> & bll, 
-							thrust::device_vector<int> & heads, 
-							std::vector<int> &, cudaEvent_t &, cudaEvent_t &);
-
 	protected:
 		const int threadsPerBlock;
 		const uint selectBarrier;

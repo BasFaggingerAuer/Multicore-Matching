@@ -843,14 +843,15 @@ void GraphMatchingGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1
 	}
 #endif
 
+	// call uncoarsen for viz
+
+
 	//Copy obtained matching on the device back to the host.
 	if (cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess)
 	{
 		cerr << "Unable to retrieve data!" << endl;
 		throw exception();
 	}
-
-
 
 	//Free memory.
 	cudaFree(drequests);

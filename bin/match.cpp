@@ -40,6 +40,13 @@ using namespace std;
 using namespace tbb;
 using namespace mtc;
 
+void writeGraphViz(std::vector<int> & match, 
+					const Graph &,
+					const string &fileName)
+{
+	
+}
+
 void initCUDA(CUdevice &device, int &nrThreads, const int &deviceIndex, const int &nrVertices)
 {
 	//Initialise CUDA.
@@ -466,6 +473,7 @@ int main(int argc, char **argv)
 				GraphMatching::getWeight(matchingWeight, matchingSize, match, graph2);
 
 				//Store benchmark data.
+				// currently wrong for general
 				matchingSizes[k] = matchingSize;
 				matchingWeights[k] = matchingWeight;
 				totalTimes[k] = time0;
