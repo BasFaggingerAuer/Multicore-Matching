@@ -449,6 +449,47 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 		}
 	}
 }
+/**
+Precondition: Graph is composed of colored heads and tails with 
+dead internal path nodes.  Also, there are entirely dead nodes/paths.
+Postcondition: Graph is paritioned into sets with unique colors.		
+Requirement: Matching is completed. Calling this while matching 
+will produce incorrect results.
+Usage: Primarily for visualization purposes.
+*/
+__global__ void gUncoarsen(int *match, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int nrVertices)
+{
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+	uint head = heads[i];
+	// Only color from heads to prevent unneccessary work.
+	if (head != i) return;
+	uint tail = tails[i];
+	int color = match[i];
+	// Entirely dead paths need to be revived.
+	if (color == 2){
+		color = i;
+		match[i] = color;
+	}
+	uint next = flinkedlist[i];
+	uint prev = blinkedlist[i];
+	bool directionToTail;
+	// Equivalent to checking if head=tail
+	if (next == prev)
+		return;
+	else if (next == i)
+		directionToTail = 0;
+	else
+		directionToTail = 1;
+
+	do {
+		match[i] = color;
+		i = (directionToTail ? flinkedlist[i] : blinkedlist[i]);
+	} while (tail != i)
+	// Color tail
+	match[i] = color;
+}
 
 //==== Random greedy matching kernels ====
 __global__ void grRequest(int *requests, const int *match, const int nrVertices)
@@ -807,6 +848,8 @@ void GraphMatchingGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1
 		cerr << "Unable to retrieve data!" << endl;
 		throw exception();
 	}
+
+
 
 	//Free memory.
 	cudaFree(drequests);
