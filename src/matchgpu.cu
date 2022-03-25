@@ -459,7 +459,7 @@ Usage: Primarily for visualization purposes.
 */
 __global__ void gUncoarsen(int *match, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int nrVertices)
 {
-	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+	int i = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (i >= nrVertices) return;
 	uint head = heads[i];
@@ -486,7 +486,7 @@ __global__ void gUncoarsen(int *match, int *heads, int *tails, int *flinkedlist,
 	do {
 		match[i] = color;
 		i = (directionToTail ? flinkedlist[i] : blinkedlist[i]);
-	} while (tail != i)
+	} while (tail != i);
 	// Color tail
 	match[i] = color;
 }
