@@ -42,7 +42,7 @@ class GraphMatching
 	
 		std::vector<int> initialMatching() const;
 		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const = 0;
-		virtual void performMatching(std::vector<int> &match , cudaEvent_t &a, cudaEvent_t &b, vector<int> &fll, vector<int> &heads, vector<int> &tails) {
+		void performMatching(std::vector<int> &match , cudaEvent_t &a, cudaEvent_t &b, vector<int> &fll, vector<int> &heads, vector<int> &tails) {
 			performMatching(match, a, b);
 		}
 	protected:
