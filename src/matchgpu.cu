@@ -865,7 +865,7 @@ void GraphMatchingGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1
 	cudaUnbindTexture(neighbourRangesTexture);
 }
 
-void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
+void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &fll, vector<int> &heads, vector<int> &tails) const
 {
 	//Creates a greedy random matching on the GPU.
 	//Assumes the current matching is empty.
@@ -1002,6 +1002,11 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 		cerr << "Unable to retrieve data!" << endl;
 		throw exception();
 	}
+
+	heads = dheads;
+	tails = dtails;
+	fll = dforwardlinkedlist;
+	std::cout << heads.size() << std::endl;
 
 	//Free memory.
 	cudaFree(drequests);

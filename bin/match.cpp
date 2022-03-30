@@ -419,6 +419,11 @@ int main(int argc, char **argv)
 	nrTimeAvg = 1;
 #endif
 
+	std::vector<int> heads;
+	std::vector<int> tails;
+	std::vector<int> fll;
+
+
 	//Perform all desired greedy matchings.
 	for (set<int>::const_iterator i = matchTypes.begin(); i != matchTypes.end(); ++i)
 	{
@@ -477,7 +482,7 @@ int main(int argc, char **argv)
 					GraphMatching *matcher = getMatcher(graph2, *i, GPUNrThreadsPerBlock, barrier);
 					
 					match = matcher->initialMatching();
-					matcher->performMatching(match, t1, t2);
+					matcher->performMatching(match, t1, t2, fll, heads, tails);
 
 					delete matcher;
 				}
