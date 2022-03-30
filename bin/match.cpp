@@ -73,7 +73,7 @@ void writeGraphViz(std::vector<int> & match,
 					next = fll[curr];
 					std::string node1Name = SSTR(curr);
 					nodeIt1 = nodeMap.find(node1Name);
-					if(nodeIt1 != nodeMap.end(){
+					if(nodeIt1 != nodeMap.end()){
 						nodeMap[node1Name] = graph->AddNode(node1Name);
 						nodeMap[node1Name]->GetAttributes().SetColor(DotWriter::Color::e(match[curr]));
 						nodeMap[node1Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[curr]));
@@ -81,7 +81,7 @@ void writeGraphViz(std::vector<int> & match,
 					}
 					std::string node2Name = SSTR(next);
 					nodeIt2 = nodeMap.find(node2Name);
-					if(nodeIt1 != nodeMap.end(){
+					if(nodeIt1 != nodeMap.end()){
 						nodeMap[node2Name] = graph->AddNode(node2Name);
 						nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[next]));
 						nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[next]));
@@ -541,7 +541,7 @@ int main(int argc, char **argv)
 				totalTimes[k] = time0;
 				matchTimes[k] = time1;
 
-				writeGraphViz(match, graph2, "iter_" + SSTR(k));
+				writeGraphViz(match, graph2, "iter_" + SSTR(k), fll, heads, tails);
 			}
 
 			
