@@ -765,7 +765,7 @@ __global__ void gwRespond(int *requests, const int *match, const int nrVertices)
 	}
 }
 
-void GraphMatchingGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const
+void GraphMatchingGPURandom::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
 {
 	//Creates a greedy random matching on the GPU.
 	//Assumes the current matching is empty.
@@ -865,7 +865,7 @@ void GraphMatchingGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1
 	cudaUnbindTexture(neighbourRangesTexture);
 }
 
-void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const
+void GraphMatchingGeneralGPURandom::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
 {
 	//Creates a greedy random matching on the GPU.
 	//Assumes the current matching is empty.
@@ -1024,7 +1024,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	cudaUnbindTexture(neighbourRangesTexture);
 }
 
-void GraphMatchingGPURandomMaximal::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const
+void GraphMatchingGPURandomMaximal::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
 {
 	//Creates a greedy random maximal matching on the GPU using atomic operations.
 	//Assumes the current matching is empty.
@@ -1115,7 +1115,7 @@ void GraphMatchingGPURandomMaximal::performMatching(vector<int> &match, cudaEven
 	cudaUnbindTexture(neighbourRangesTexture);
 }
 
-void GraphMatchingGPUWeighted::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const
+void GraphMatchingGPUWeighted::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
 {
 	//Creates a greedy weighted matching on the GPU.
 	//Assumes the current matching is empty.
@@ -1224,7 +1224,7 @@ void GraphMatchingGPUWeighted::performMatching(vector<int> &match, cudaEvent_t &
 	cudaUnbindTexture(neighbourRangesTexture);
 }
 
-void GraphMatchingGPUWeightedMaximal::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const
+void GraphMatchingGPUWeightedMaximal::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
 {
 	//Creates a greedy weighted matching on the GPU.
 	//Assumes the current matching is empty.
