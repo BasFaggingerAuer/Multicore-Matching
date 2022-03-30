@@ -41,10 +41,8 @@ class GraphMatching
 		static inline bool isMatched(const int &m) {return m >= 4;};
 	
 		std::vector<int> initialMatching() const;
-		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const = 0;
-		virtual void performMatching(std::vector<int> &match , cudaEvent_t &a, cudaEvent_t &b, std::vector<int> &fll, std::vector<int> &heads, std::vector<int> &tails) {
-			performMatching(match, a, b);
-		}
+		virtual void performMatching(std::vector<int> &match , cudaEvent_t &a, cudaEvent_t &b, std::vector<int> &fll, std::vector<int> &heads, std::vector<int> &tails) const = 0;
+
 	protected:
 		const Graph &graph;
 };
@@ -55,7 +53,7 @@ class GraphMatchingCPURandom : public GraphMatching
 		GraphMatchingCPURandom(const Graph &);
 		~GraphMatchingCPURandom();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
 };
 
 class GraphMatchingCPUMinDeg : public GraphMatching
@@ -64,7 +62,7 @@ class GraphMatchingCPUMinDeg : public GraphMatching
 		GraphMatchingCPUMinDeg(const Graph &);
 		~GraphMatchingCPUMinDeg();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
 };
 
 class GraphMatchingCPUStatMinDeg : public GraphMatching
@@ -73,7 +71,7 @@ class GraphMatchingCPUStatMinDeg : public GraphMatching
 		GraphMatchingCPUStatMinDeg(const Graph &);
 		~GraphMatchingCPUStatMinDeg();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
 };
 
 class GraphMatchingCPUKarpSipser : public GraphMatching
@@ -82,7 +80,7 @@ class GraphMatchingCPUKarpSipser : public GraphMatching
 		GraphMatchingCPUKarpSipser(const Graph &);
 		~GraphMatchingCPUKarpSipser();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
 };
 
 class GraphMatchingCPUWeighted : public GraphMatching
@@ -91,7 +89,7 @@ class GraphMatchingCPUWeighted : public GraphMatching
 		GraphMatchingCPUWeighted(const Graph &);
 		~GraphMatchingCPUWeighted();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
 };
 
 class GraphMatchingCPUWeightedEdge : public GraphMatching
@@ -100,7 +98,7 @@ class GraphMatchingCPUWeightedEdge : public GraphMatching
 		GraphMatchingCPUWeightedEdge(const Graph &);
 		~GraphMatchingCPUWeightedEdge();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
 };
 
 };
