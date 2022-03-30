@@ -540,7 +540,7 @@ int main(int argc, char **argv)
 				totalTimes[k] = time0;
 				matchTimes[k] = time1;
 
-				writeGraphViz(match, graph2, "iter_" + SSTR(k));
+				writeGraphViz(match, graph2, "iter_" + SSTR(k), heads, tails, fll);
 			}
 
 			
