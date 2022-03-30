@@ -903,9 +903,9 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::sequence(T.begin(),T.end());
 	dtails = thrust::raw_pointer_cast(&T[0]);
 
-	thrust::device_vector<int>fll(graph.nrVertices);
-	thrust::sequence(fll.begin(),fll.end());
-	dforwardlinkedlist = thrust::raw_pointer_cast(&fll[0]);
+	thrust::device_vector<int>dfll(graph.nrVertices);
+	thrust::sequence(dfll.begin(),dfll.end());
+	dforwardlinkedlist = thrust::raw_pointer_cast(&dfll[0]);
 	
 	thrust::device_vector<int>bll(graph.nrVertices);
 	thrust::sequence(bll.begin(),bll.end());
