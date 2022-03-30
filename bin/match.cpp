@@ -49,14 +49,14 @@ using namespace mtc;
 
 void writeGraphViz(std::vector<int> & match, 
 					const Graph & g,
-					const string &fileName)
+					const string &fileName_arg)
 {
 	DotWriter::RootGraph gVizWriter(false, "graph");
     std::string subgraph1 = "graph";
 
     std::map<std::string, DotWriter::Node *> nodeMap;    
-	
-	std::cout << "Wrote graph viz " << filename << std::endl;
+
+	std::cout << "Wrote graph viz " << fileName_arg << std::endl;
 
 }
 
