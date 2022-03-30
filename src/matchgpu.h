@@ -36,7 +36,7 @@ class GraphMatchingGPU : public GraphMatching
 		GraphMatchingGPU(const Graph &, const int &, const unsigned int &);
 		virtual ~GraphMatchingGPU();
 		
-		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const = 0;
+		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & h, std::vector<int> & t, std::vector<int> & fll) const = 0;
 	protected:
 		const int threadsPerBlock;
 		const uint selectBarrier;
@@ -50,7 +50,7 @@ class GraphMatchingGPURandom : public GraphMatchingGPU
 		GraphMatchingGPURandom(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGPURandom();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & h, std::vector<int> & t, std::vector<int> & fll) const;
 
 };
 
@@ -60,7 +60,7 @@ class GraphMatchingGeneralGPURandom : public GraphMatchingGPU
 		GraphMatchingGeneralGPURandom(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGeneralGPURandom();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & h, std::vector<int> & t, std::vector<int> & fll) const;
 	
 };
 
@@ -70,7 +70,7 @@ class GraphMatchingGPURandomMaximal : public GraphMatchingGPU
 		GraphMatchingGPURandomMaximal(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGPURandomMaximal();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & h, std::vector<int> & t, std::vector<int> & fll) const;
 };
 
 class GraphMatchingGPUWeighted : public GraphMatchingGPU
@@ -79,7 +79,7 @@ class GraphMatchingGPUWeighted : public GraphMatchingGPU
 		GraphMatchingGPUWeighted(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGPUWeighted();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & h, std::vector<int> & t, std::vector<int> & fll) const;
 
 	private:
 		int *dweights;
@@ -91,7 +91,7 @@ class GraphMatchingGPUWeightedMaximal : public GraphMatchingGPU
 		GraphMatchingGPUWeightedMaximal(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGPUWeightedMaximal();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
+		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & h, std::vector<int> & t, std::vector<int> & fll) const;
 
 	private:
 		int *dweights;
