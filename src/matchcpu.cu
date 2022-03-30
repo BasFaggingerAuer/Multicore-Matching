@@ -256,7 +256,7 @@ GraphMatchingCPURandom::~GraphMatchingCPURandom()
 	
 }
 
-void GraphMatchingCPURandom::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
+void GraphMatchingCPURandom::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
 {
 	//This is a random greedy matching algorithm.
 	//Assumes that the order of the vertices has already been randomized.
@@ -313,7 +313,7 @@ GraphMatchingCPUMinDeg::~GraphMatchingCPUMinDeg()
 	
 }
 
-void GraphMatchingCPUMinDeg::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
+void GraphMatchingCPUMinDeg::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
 {
 	//This is a two-sided dynamic minimum degree greedy matching algorithm.
 	//Assumes that no vertices have been matched yet.
@@ -459,7 +459,7 @@ class SortByDegree
 		const Graph &g;
 };
 
-void GraphMatchingCPUStatMinDeg::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
+void GraphMatchingCPUStatMinDeg::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
 {
 	//This is a one-sided static minimum degree greedy matching algorithm.
 	
@@ -526,7 +526,7 @@ GraphMatchingCPUKarpSipser::~GraphMatchingCPUKarpSipser()
 	
 }
 
-void GraphMatchingCPUKarpSipser::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
+void GraphMatchingCPUKarpSipser::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
 {
 	//This is the one-sided Karp-Sipser greedy matching algorithm.
 	//Assumes that the order of the vertices has already been randomized and that the given matching is empty.
@@ -692,7 +692,7 @@ GraphMatchingCPUWeighted::~GraphMatchingCPUWeighted()
 	
 }
 
-void GraphMatchingCPUWeighted::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
+void GraphMatchingCPUWeighted::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
 {
 	//This is a greedy weighted matching algorithm.
 	//Assumes that the order of the vertices has already been randomized.
@@ -774,7 +774,7 @@ GraphMatchingCPUWeightedEdge::~GraphMatchingCPUWeightedEdge()
 	
 }
 
-void GraphMatchingCPUWeightedEdge::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
+void GraphMatchingCPUWeightedEdge::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
 {
 	//This is a greedy weighted matching algorithm.
 	//Instead of being vertex oriented, this is an edge oriented algorithm.
