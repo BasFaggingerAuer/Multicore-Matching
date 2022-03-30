@@ -60,7 +60,7 @@ class GraphMatchingGeneralGPURandom : public GraphMatchingGPU
 		GraphMatchingGeneralGPURandom(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGeneralGPURandom();
 		
-		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const) const;
+		void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &) const;
 	
 };
 
