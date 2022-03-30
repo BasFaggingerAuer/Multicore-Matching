@@ -437,10 +437,13 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 				heads[i] = heads[r];
 				// tails[i] isn't thread-sensitive since I am the (+) end
 				match[heads[i]] = 4 + min(heads[i], tails[i]);
+				match[tails[i]] = 4 + min(heads[i], tails[i]);
+
 			} else {
 				// Negative sense, update head
 				tails[i] = tails[r];
 				// heads[i] isn't thread-sensitive since I am the (-) end
+				match[heads[i]] = 4 + min(heads[i], tails[i]);
 				match[tails[i]] = 4 + min(heads[i], tails[i]);
 			}
 			flinkedlist[i] = r;
