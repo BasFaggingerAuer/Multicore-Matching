@@ -99,7 +99,7 @@ void writeGraphViz(std::vector<int> & match,
 
 					if(nodeIt1 != nodeMap.end() && nodeIt2 != nodeMap.end()) 
 						graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
-
+					std::cout << "setting curr " << curr << "to next " << next << std::endl;
 					curr = next;
 			} while (curr != t[i]);
 		}
