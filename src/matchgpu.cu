@@ -1004,7 +1004,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	httails = T;
 	htforwardlinkedlist = fll;
 
-	for (for int i = 0; i < httails.size(); ++i)
+	for (int i = 0; i < httails.size(); ++i)
 		std::cout << "tail " << httails[i] << std::endl;
 
 
