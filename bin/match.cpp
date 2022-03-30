@@ -55,18 +55,7 @@ void writeGraphViz(std::vector<int> & match,
     std::string subgraph1 = "graph";
 
     std::map<std::string, DotWriter::Node *> nodeMap;    
-
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, 655); // define the range
-
-    int * new_colors_randomized = new int[g.nrVertices];
-    int * new_colors_mapper = new int[g.nrVertices];
-
-    for(int n=0; n<g.nrVertices; ++n){
-        new_colors_mapper[n] = distr(gen); // generate numbers
-    }
-
+	
 	std::cout << "Wrote graph viz " << filename << std::endl;
 
 }
