@@ -48,11 +48,11 @@ using namespace tbb;
 using namespace mtc;
 
 void writeGraphViz(std::vector<int> & match, 
+					const Graph & g,
+					const string &fileName_arg 
 					std::vector<int> & h, 
 					std::vector<int> & t, 
-					std::vector<int> & fll, 
-					const Graph & g,
-					const string &fileName_arg)
+					std::vector<int> & fll)
 {
 	DotWriter::RootGraph gVizWriter(false, "graph");
     std::string subgraph1 = "graph";
