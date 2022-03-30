@@ -75,7 +75,7 @@ void writeGraphViz(std::vector<int> & match,
                 std::map<std::string, DotWriter::Node *>::const_iterator nodeIt2 = nodeMap.find(node2Name);
                 if(nodeIt2 == nodeMap.end()) {
                     nodeMap[node2Name] = graph->AddNode(node2Name);
-                    if(new_vertex_finished[new_cols[j]]){
+                    if(match[g.neighbours[j]] > 3){
                         nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[g.neighbours[j]]));
                         nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[g.neighbours[j]]));
                         nodeMap[node2Name]->GetAttributes().SetStyle("filled");
