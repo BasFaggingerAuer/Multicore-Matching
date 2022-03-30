@@ -41,10 +41,27 @@ using namespace tbb;
 using namespace mtc;
 
 void writeGraphViz(std::vector<int> & match, 
-					const Graph &,
+					const Graph & g,
 					const string &fileName)
 {
-	
+	DotWriter::RootGraph gVizWriter(false, "graph");
+    std::string subgraph1 = "graph";
+
+    std::map<std::string, DotWriter::Node *> nodeMap;    
+
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(0, 655); // define the range
+
+    int * new_colors_randomized = new int[g.nrVertices];
+    int * new_colors_mapper = new int[g.nrVertices];
+
+    for(int n=0; n<g.nrVertices; ++n){
+        new_colors_mapper[n] = distr(gen); // generate numbers
+    }
+
+	std::cout << "Wrote graph viz " << filename << std::endl;
+
 }
 
 void initCUDA(CUdevice &device, int &nrThreads, const int &deviceIndex, const int &nrVertices)
@@ -478,7 +495,12 @@ int main(int argc, char **argv)
 				matchingWeights[k] = matchingWeight;
 				totalTimes[k] = time0;
 				matchTimes[k] = time1;
+
+				writeGraphViz(match, graph2, "iter_" + string(itoa(k)));
 			}
+
+			
+
 
 #ifndef MATCH_INTERMEDIATE_COUNT
 			double avg = 0.0, dev = 0.0;
@@ -529,6 +551,9 @@ int main(int argc, char **argv)
 	//Close GNUplot file.
 	gnuplotFile << endl;
 	gnuplotFile.close();
+
+
+
 
 	return 0;
 }

@@ -26,4 +26,4 @@ set(CUDA_NVCC_FLAGS -Xptxas -dlcm=cg)
 
 add_subdirectory(${MATCH_SOURCE_DIR}/src/)
 add_subdirectory(${MATCH_SOURCE_DIR}/bin/)
-
+add_subdirectory(${MATCH_SOURCE_DIR}/DotWriter/lib/)
