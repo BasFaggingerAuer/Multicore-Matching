@@ -1,4 +1,4 @@
-include_directories(${CUDA_INCLUDE_DIR} ${TBB_INCLUDE_DIR} ${MATCH_SOURCE_DIR}/src/)
+include_directories(${CUDA_INCLUDE_DIR} ${TBB_INCLUDE_DIR} ${MATCH_SOURCE_DIR}/src/ ${MATCH_SOURCE_DIR}/DotWriter/lib)
 
 cuda_add_executable(gpustat gpustat.cu)
 target_link_libraries(gpustat ${CUDA_LIBRARY} cuda)
