@@ -69,9 +69,15 @@ void writeGraphViz(std::vector<int> & match,
 		tail = t[i];
 		curr = i;
 		if(i == head && head != tail){
+			std::cout << "Stop when " << curr << "=="  << tail << std::endl;
 			do {
+					if (tail != t[curr]){
+						std::cout << "Stop tail changed!? start" << i << "'s tail is "  << tail << std::endl;
+						std::cout << "Stop tail changed!? " << curr << "'s tail is "  << t[curr] << std::endl;
+					}
 					next = fll[curr];
 					std::string node1Name = SSTR(curr);
+
 					nodeIt1 = nodeMap.find(node1Name);
 					if(nodeIt1 != nodeMap.end()){
 						nodeMap[node1Name] = graph->AddNode(node1Name);
