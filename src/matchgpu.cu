@@ -1004,9 +1004,9 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	htforwardlinkedlist = fll;
 
 
-	thrust::copy(htheads.begin(), htheads.end(), hheads.begin());
-	thrust::copy(httails.begin(), httails.end(), htails.begin());
-	thrust::copy(htforwardlinkedlist.begin(), htforwardlinkedlist.end(), hfll.begin());
+	thrust::copy(htheads.begin(), htheads.end(), h.begin());
+	thrust::copy(httails.begin(), httails.end(), t.begin());
+	thrust::copy(htforwardlinkedlist.begin(), htforwardlinkedlist.end(), fll.begin());
 
 	//Free memory.
 	cudaFree(drequests);
