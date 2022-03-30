@@ -49,7 +49,7 @@ using namespace mtc;
 
 void writeGraphViz(std::vector<int> & match, 
 					const Graph & g,
-					const string &fileName_arg 
+					const string &fileName_arg, 
 					std::vector<int> & h, 
 					std::vector<int> & t, 
 					std::vector<int> & fll)
@@ -541,7 +541,7 @@ int main(int argc, char **argv)
 				totalTimes[k] = time0;
 				matchTimes[k] = time1;
 
-				writeGraphViz(match, graph2, "iter_" + SSTR(k), fll, heads, tails);
+				writeGraphViz(match, graph2, "iter_" + SSTR(k), heads, tails, fll);
 			}
 
 			
