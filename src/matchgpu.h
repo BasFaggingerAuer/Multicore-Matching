@@ -50,7 +50,7 @@ class GraphMatchingGPURandom : public GraphMatchingGPU
 		GraphMatchingGPURandom(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGPURandom();
 		
-		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
+		void performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const;
 
 };
 
@@ -70,7 +70,7 @@ class GraphMatchingGPURandomMaximal : public GraphMatchingGPU
 		GraphMatchingGPURandomMaximal(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGPURandomMaximal();
 		
-		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
+		void performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const;
 };
 
 class GraphMatchingGPUWeighted : public GraphMatchingGPU
@@ -79,7 +79,7 @@ class GraphMatchingGPUWeighted : public GraphMatchingGPU
 		GraphMatchingGPUWeighted(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGPUWeighted();
 		
-		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
+		void performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const;
 
 	private:
 		int *dweights;
@@ -91,7 +91,7 @@ class GraphMatchingGPUWeightedMaximal : public GraphMatchingGPU
 		GraphMatchingGPUWeightedMaximal(const Graph &, const int &, const unsigned int &);
 		~GraphMatchingGPUWeightedMaximal();
 		
-		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> &hfll, vector<int> &hheads, vector<int> &htails) const;
+		void performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const;
 
 	private:
 		int *dweights;
