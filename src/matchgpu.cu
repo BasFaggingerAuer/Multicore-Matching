@@ -982,11 +982,11 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 
 
 	// call uncoarsen for viz
-	#ifdef UNCOARSEN_GRAPH	
+	//#ifdef UNCOARSEN_GRAPH	
 	gUncoarsen<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dheads, dtails, 
 													dforwardlinkedlist, dbackwardlinkedlist, 
 													graph.nrVertices);
-	#endif
+	//#endif
 
 	//Copy obtained matching on the device back to the host.
 	if (cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess)
