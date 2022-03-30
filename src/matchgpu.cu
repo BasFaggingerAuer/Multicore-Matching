@@ -1007,9 +1007,9 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::host_vector<int>httails;
 	thrust::host_vector<int>htforwardlinkedlist;
 
-	htheads = dheads;
-	httails = dtails;
-	htforwardlinkedlist = dforwardlinkedlist;
+	htheads = H;
+	httails = T;
+	htforwardlinkedlist = fll;
 
 
 	thrust::copy(htheads.begin(), htheads.end(), hheads.begin());
