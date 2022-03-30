@@ -6,8 +6,8 @@ target_link_libraries(gpustat ${CUDA_LIBRARY} cuda)
 find_package(Boost COMPONENTS iostreams program_options REQUIRED)
 
 link_directories(${Boost_LIBRARY_DIRS})
-include_directories(${Boost_INCLUDE_DIRS})
-add_executable(match match.cpp ${MATCH_SOURCE_DIR}/DotWriter/lib)
+include_directories(${Boost_INCLUDE_DIRS} ${MATCH_SOURCE_DIR}/DotWriter/lib/*)
+add_executable(match match.cpp ${MATCH_SOURCE_DIR}/DotWriter/lib/*)
 set_target_properties(match PROPERTIES
 CUDA_ARCHITECTURES "35;37;60;70;80")
 target_compile_options(match PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-gencode arch=compute_37,code=sm_37>)
