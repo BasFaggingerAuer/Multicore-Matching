@@ -1007,7 +1007,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::copy(htheads.begin(), htheads.end(), h.begin());
 	thrust::copy(httails.begin(), httails.end(), t.begin());
 	thrust::copy(htforwardlinkedlist.begin(), htforwardlinkedlist.end(), fll.begin());
-
+	std::cout << "finishd copying" std::endl;
 	//Free memory.
 	cudaFree(drequests);
 	cudaFree(dmatch);
