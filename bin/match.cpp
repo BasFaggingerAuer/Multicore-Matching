@@ -63,11 +63,11 @@ void writeGraphViz(std::vector<int> & match,
         std::map<std::string, DotWriter::Node *>::const_iterator nodeIt1 = nodeMap.find(node1Name);
         if(nodeIt1 == nodeMap.end()) {
             nodeMap[node1Name] = graph->AddNode(node1Name);
-            if(match[i] != 2){
+            //if(match[i] != 2){
                 nodeMap[node1Name]->GetAttributes().SetColor(DotWriter::Color::e(match[i]));
                 nodeMap[node1Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[i]));
                 nodeMap[node1Name]->GetAttributes().SetStyle("filled");
-            }
+            //}
         }
         for (int j = g.neighbourRanges[i].x; j < g.neighbourRanges[i].y; ++j){
             if (i < g.neighbours[j]){
@@ -75,11 +75,11 @@ void writeGraphViz(std::vector<int> & match,
                 std::map<std::string, DotWriter::Node *>::const_iterator nodeIt2 = nodeMap.find(node2Name);
                 if(nodeIt2 == nodeMap.end()) {
                     nodeMap[node2Name] = graph->AddNode(node2Name);
-                    if(match[g.neighbours[j]] != 2){
+                    //if(match[g.neighbours[j]] != 2){
                         nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[g.neighbours[j]]));
                         nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[g.neighbours[j]]));
                         nodeMap[node2Name]->GetAttributes().SetStyle("filled");
-                    }
+                    //}
                 }  
                 //graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name], SSTR(host_levels[i]));
                 graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
