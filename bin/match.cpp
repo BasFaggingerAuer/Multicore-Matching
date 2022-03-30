@@ -53,8 +53,41 @@ void writeGraphViz(std::vector<int> & match,
 {
 	DotWriter::RootGraph gVizWriter(false, "graph");
     std::string subgraph1 = "graph";
+    DotWriter::Subgraph * graph = gVizWriter.AddSubgraph(subgraph1);
 
     std::map<std::string, DotWriter::Node *> nodeMap;    
+
+ // Since the graph doesnt grow uniformly, it is too difficult to only copy the new parts..
+    for (int i = 0; i < g.nrVertices; ++i){
+        std::string node1Name = SSTR(i);
+        std::map<std::string, DotWriter::Node *>::const_iterator nodeIt1 = nodeMap.find(node1Name);
+        if(nodeIt1 == nodeMap.end()) {
+            nodeMap[node1Name] = graph->AddNode(node1Name);
+            if(new_vertex_finished[i]){
+                nodeMap[node1Name]->GetAttributes().SetColor(DotWriter::Color::e(match[i]));
+                nodeMap[node1Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[i]));
+                nodeMap[node1Name]->GetAttributes().SetStyle("filled");
+            }
+        }
+        for (int j = g.neighbourRanges[i][0]; j < g.neighbourRanges[i][1]; ++j){
+            if (i < g.neighbours[j]){
+                std::string node2Name = SSTR(new_cols[j]);
+                std::map<std::string, DotWriter::Node *>::const_iterator nodeIt2 = nodeMap.find(node2Name);
+                if(nodeIt2 == nodeMap.end()) {
+                    nodeMap[node2Name] = graph->AddNode(node2Name);
+                    if(new_vertex_finished[new_cols[j]]){
+                        nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[g.neighbours[j]]));
+                        nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[g.neighbours[j]]));
+                        nodeMap[node2Name]->GetAttributes().SetStyle("filled");
+                    }
+                }  
+                //graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name], SSTR(host_levels[i]));
+                graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
+ 
+            }
+        }
+    }
+    gVizWriter.WriteToFile(fileName_arg);
 
 	std::cout << "Wrote graph viz " << fileName_arg << std::endl;
 
