@@ -70,6 +70,7 @@ void writeGraphViz(std::vector<int> & match,
             }
         }
         for (int j = g.neighbourRanges[i].x; j < g.neighbourRanges[i].y; ++j){
+				if (i < g.neighbours[j]){
                 std::string node2Name = SSTR(g.neighbours[j]);
                 std::map<std::string, DotWriter::Node *>::const_iterator nodeIt2 = nodeMap.find(node2Name);
                 if(nodeIt2 == nodeMap.end()) {
@@ -86,6 +87,7 @@ void writeGraphViz(std::vector<int> & match,
 
 				if(nodeIt1 != nodeMap.end() && nodeIt2 != nodeMap.end()) 
 				graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
+				}
  
             
         }
