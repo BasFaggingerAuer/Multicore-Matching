@@ -995,6 +995,19 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 		throw exception();
 	}
 
+	thrust::host_vector<int>htheads;
+	thrust::host_vector<int>httails;
+	thrust::host_vector<int>htforwardlinkedlist;
+
+	htheads = H;
+	httails = T;
+	htforwardlinkedlist = fll;
+
+
+	thrust::copy(htheads.begin(), htheads.end(), hheads.begin());
+	thrust::copy(httails.begin(), httails.end(), htails.begin());
+	thrust::copy(htforwardlinkedlist.begin(), htforwardlinkedlist.end(), hfll.begin());
+
 	//Free memory.
 	cudaFree(drequests);
 	cudaFree(dmatch);
