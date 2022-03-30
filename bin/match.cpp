@@ -496,7 +496,7 @@ int main(int argc, char **argv)
 				totalTimes[k] = time0;
 				matchTimes[k] = time1;
 
-				writeGraphViz(match, graph2, "iter_" + string(itoa(k)));
+				writeGraphViz(match, graph2, "iter_" + to_string(k));
 			}
 
 			

@@ -5,11 +5,11 @@ See COPYING for more information.
 
 == Requirements:
 
-(1) Linux development environment (g++, make, ...)
+(1) Linux development environment (g++, make, ...) (GNU 4.8.5 works but shows warning about lacking C++11 support.)
 (2) CMake
-(3) NVIDIA's CUDA development libraries and tools
-(4) Boost development libraries
-(5) Intel's Threading Building Blocks library
+(3) NVIDIA's CUDA development libraries and tools (CUDA must be < 11.0 for Kepler cards).
+(4) Boost development libraries ("1.53.0" works; required components: iostreams program_options regex)
+(5) Intel's Threading Building Blocks library (Intel 2020 works.)
 (6) gnuplot (optional)
 
 == Compilation:
