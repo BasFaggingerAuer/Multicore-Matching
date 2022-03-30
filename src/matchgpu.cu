@@ -1003,10 +1003,9 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 		throw exception();
 	}
 
-	heads = dheads;
-	tails = dtails;
-	fll = dforwardlinkedlist;
-	std::cout << heads.size() << std::endl;
+	thrust::copy(dheads.begin(), dheads.end(), heads.begin());
+	thrust::copy(dtails.begin(), dtails.end(), tails.begin());
+	thrust::copy(dforwardlinkedlist.begin(), dforwardlinkedlist.end(), fll.begin());
 
 	//Free memory.
 	cudaFree(drequests);
