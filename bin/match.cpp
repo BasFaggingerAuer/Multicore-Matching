@@ -81,7 +81,8 @@ void writeGraphViz(std::vector<int> & match,
                     }
                 }  
                 //graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name], SSTR(host_levels[i]));
-                graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
+                if(nodeIt2 != nodeMap.end()) 
+				graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
  
             
         }
