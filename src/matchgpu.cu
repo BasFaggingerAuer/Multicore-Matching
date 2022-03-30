@@ -466,6 +466,8 @@ __global__ void gUncoarsen(int *match, int *heads, int *tails, int *flinkedlist,
 	// Only color from heads to prevent unneccessary work.
 	if (head != i) return;
 	uint tail = tails[i];
+	// Skip unmatched nodes
+	if (head == tail ) return;
 	int color = match[i];
 	// Entirely dead paths need to be revived.
 	// Also unmatched red/blues need to given a unique color.
