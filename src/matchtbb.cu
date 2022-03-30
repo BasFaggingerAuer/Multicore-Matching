@@ -495,7 +495,7 @@ GraphMatchingTBBRandom::~GraphMatchingTBBRandom()
 	
 }
 
-void GraphMatchingTBBRandom::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
+void GraphMatchingTBBRandom::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
 {
 	//This is a random greedy matching algorithm using Intel's Threading Building Blocks library.
 	//Assumes that the order of the vertices has already been randomized.
@@ -564,7 +564,7 @@ GraphMatchingTBBWeighted::~GraphMatchingTBBWeighted()
 	
 }
 
-void GraphMatchingTBBWeighted::performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const
+void GraphMatchingTBBWeighted::performMatching(std::vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, std::vector<int> &hfll, std::vector<int> &hheads, std::vector<int> &htails) const
 {
 	//This is a weighted greedy matching algorithm using Intel's Threading Building Blocks library.
 	//Assumes that the order of the vertices has already been randomized.
