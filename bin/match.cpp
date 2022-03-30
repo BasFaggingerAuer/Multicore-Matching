@@ -71,7 +71,7 @@ void writeGraphViz(std::vector<int> & match,
         }
         for (const int j = g.neighbourRanges[i].x; j < g.neighbourRanges[i].y; ++j){
             if (i < g.neighbours[j]){
-                std::string node2Name = SSTR(new_cols[j]);
+                std::string node2Name = SSTR(g.neighbours[j]);
                 std::map<std::string, DotWriter::Node *>::const_iterator nodeIt2 = nodeMap.find(node2Name);
                 if(nodeIt2 == nodeMap.end()) {
                     nodeMap[node2Name] = graph->AddNode(node2Name);
