@@ -49,62 +49,45 @@ using namespace mtc;
 
 void writeGraphViz(std::vector<int> & match, 
 					const Graph & g,
-					const string &fileName_arg, 
-					std::vector<int> & h, 
-					std::vector<int> & t, 
-					std::vector<int> & fll)
+					const string &fileName_arg,  
+					std::vector<int> & fll,
+					std::vector<int> & bll)
 {
 	DotWriter::RootGraph gVizWriter(false, "graph");
     std::string subgraph1 = "graph";
     DotWriter::Subgraph * graph = gVizWriter.AddSubgraph(subgraph1);
 
     std::map<std::string, DotWriter::Node *> nodeMap;    
-	int head, tail, curr, next;
+	int curr, next;
 	std::map<std::string, DotWriter::Node *>::const_iterator nodeIt1;
 	std::map<std::string, DotWriter::Node *>::const_iterator nodeIt2;
 
     for (int i = 0; i < g.nrVertices; ++i){
-		head = h[i];
-		tail = t[i];
 		curr = i;
-		std::cout << "Stop when " << curr << "=="  << tail << "head : " << head << " next : " << fll[curr] << std::endl;
-		if(i == head && head != tail){
-			do {
-					if (tail != t[curr]){
-						std::cout << "Stop tail changed!? start" << i << "'s tail is "  << tail << std::endl;
-						std::cout << "Stop tail changed!? " << curr << "'s tail is "  << t[curr] << std::endl;
-					}
-					next = fll[curr];
-					std::string node1Name = SSTR(curr);
+		next = fll[curr];
+		std::string node1Name = SSTR(curr);
 
-					nodeIt1 = nodeMap.find(node1Name);
-					if(nodeIt1 != nodeMap.end()){
-						nodeMap[node1Name] = graph->AddNode(node1Name);
-						nodeMap[node1Name]->GetAttributes().SetColor(DotWriter::Color::e(match[curr]));
-						nodeMap[node1Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[curr]));
-						nodeMap[node1Name]->GetAttributes().SetStyle("filled");
-					}
-					std::string node2Name = SSTR(next);
-					nodeIt2 = nodeMap.find(node2Name);
-					if(nodeIt1 != nodeMap.end()){
-						nodeMap[node2Name] = graph->AddNode(node2Name);
-						nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[next]));
-						nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[next]));
-						nodeMap[node2Name]->GetAttributes().SetStyle("filled");
-					}
-					//graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name], SSTR(host_levels[i]));
-					nodeIt1 = nodeMap.find(node1Name);
-					nodeIt2 = nodeMap.find(node2Name);
-
-					if(nodeIt1 != nodeMap.end() && nodeIt2 != nodeMap.end()) 
-						graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
-					std::cout << "setting curr " << curr << "to next " << next << std::endl;
-					std::cout << "curr's tail " << t[curr] << "orig's tail " << t[i] << std::endl;
-					std::cout << "next's tail " << t[next] << "orig's tail " << t[i] << std::endl;
-
-					curr = next;
-			} while (curr != t[i]);
+		nodeIt1 = nodeMap.find(node1Name);
+		if(nodeIt1 != nodeMap.end()){
+			nodeMap[node1Name] = graph->AddNode(node1Name);
+			nodeMap[node1Name]->GetAttributes().SetColor(DotWriter::Color::e(match[curr]));
+			nodeMap[node1Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[curr]));
+			nodeMap[node1Name]->GetAttributes().SetStyle("filled");
 		}
+		std::string node2Name = SSTR(next);
+		nodeIt2 = nodeMap.find(node2Name);
+		if(nodeIt1 != nodeMap.end()){
+			nodeMap[node2Name] = graph->AddNode(node2Name);
+			nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[next]));
+			nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[next]));
+			nodeMap[node2Name]->GetAttributes().SetStyle("filled");
+		}
+		//graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name], SSTR(host_levels[i]));
+		nodeIt1 = nodeMap.find(node1Name);
+		nodeIt2 = nodeMap.find(node2Name);
+
+		if(nodeIt1 != nodeMap.end() && nodeIt2 != nodeMap.end()) 
+			graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
     }
     gVizWriter.WriteToFile(fileName_arg);
 
@@ -433,9 +416,8 @@ int main(int argc, char **argv)
 	nrTimeAvg = 1;
 #endif
 
-	std::vector<int> heads(graph.nrVertices);
-	std::vector<int> tails(graph.nrVertices);
 	std::vector<int> fll(graph.nrVertices);
+	std::vector<int> bll(graph.nrVertices);
 
 	//Perform all desired greedy matchings.
 	for (set<int>::const_iterator i = matchTypes.begin(); i != matchTypes.end(); ++i)
@@ -495,7 +477,7 @@ int main(int argc, char **argv)
 					GraphMatching *matcher = getMatcher(graph2, *i, GPUNrThreadsPerBlock, barrier);
 					
 					match = matcher->initialMatching();
-					matcher->performMatching(match, t1, t2, fll, heads, tails);
+					matcher->performMatching(match, t1, t2, fll, bll);
 
 					delete matcher;
 				}
@@ -548,7 +530,7 @@ int main(int argc, char **argv)
 				totalTimes[k] = time0;
 				matchTimes[k] = time1;
 
-				writeGraphViz(match, graph2, "iter_" + SSTR(k), heads, tails, fll);
+				writeGraphViz(match, graph2, "iter_" + SSTR(k), fll, bll);
 			}
 
 			
