@@ -432,19 +432,21 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 			// - sense: read tails[r] and write into tails[i], heads[i] unchanged.
 
 			if(sense[i]){ 
-				// Negative sense, update head
-				heads[i] = heads[r];
+				// Negative sense, update tail
+				tails[i] = tails[r];
+				printf("tail %d\n", tails[i]);
 				// heads[i] isn't thread-sensitive since I am the (-) end
 				match[tails[i]] = 4 + min(heads[i], tails[i]);
+				blinkedlist[i] = r;
 			} else {
-				// Positive sense, update tail
-				tails[i] = tails[r];
+				// Positive sense, update head
 				// Update head
+				heads[i] = heads[r];
 				// tails[i] isn't thread-sensitive since I am the (+) end
 				match[heads[i]] = 4 + min(heads[i], tails[i]);
+				flinkedlist[i] = r;
 			}
-			flinkedlist[i] = r;
-			blinkedlist[r] = i;
+
 			//printf("SUCCESS\n");
 		}
 	}
