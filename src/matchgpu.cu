@@ -454,50 +454,26 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 
 			if(ImAHead){
 				// Update head
-				if(partnerIsAHead)
-					heads[i] = tails[r];
-				else
-					heads[i] = heads[r];
-				
-				match[heads[i]] = 4 + min(heads[i], tails[i]);
-				blinkedlist[i] = r;
-
+				if(partnerIsAHead){
+					if(sense[i]){ 
+						flinkedlist[myTail] = partnersTail;
+					} else {
+						flinkedlist[i] = r;
+					}
+				} else {
+					flinkedlist[i] = r;
+				}
 			} else {
 				// Update tail
 				if(partnerIsAHead){
-					tails[i] = tails[r];
+					flinkedlist[myHead] = tails[r];
 				} else{
-					// We're both tails, someone's head has to win
-					// Use match instead of raw index because it is
-					// hashed so thoroughly to avoid bias.
 					if(sense[i]){ 
-						tails[i] = tails[r];
-						printf("tail %d\n", tails[i]);
-						// heads[i] isn't thread-sensitive since I am the (-) end
-						match[tails[i]] = 4 + min(heads[i], tails[i]);
+						flinkedlist[myHead] = partnersHead;
 					} else {
-						// Positive sense, reverse negative sense linked list
-						int curr, next;
-						curr = i;
-						next = r;
-						flinkedlist[curr] = next;
-						curr = next;
-						do {
-							next = blinkedlist[curr];
-							flinkedlist[curr] = next;
-							curr = next;
-						} while (curr != partnersHead)
-						flinkedlist[curr] = curr;
-						// Update head
-						tails[r] = heads[r];
-						// tails[i] isn't thread-sensitive since I am the (+) end
-						match[heads[i]] = 4 + min(heads[i], tails[i]);
+						flinkedlist[i] = r;
 					}
-					min(match[i], match[r])
-					tails[i] = heads[r];	
 				}
-				match[tails[i]] = 4 + min(heads[i], tails[i]);
-				flinkedlist[i] = r;		
 			}
 		}
 	}
