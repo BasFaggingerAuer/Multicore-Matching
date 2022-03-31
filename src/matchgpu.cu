@@ -738,7 +738,7 @@ Requirement: Matching is completed. Calling this while matching
 will produce incorrect results.
 Usage: Primarily for visualization purposes.
 */
-__global__ void gUncoarsen(int *match, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int nrVertices)
+__global__ void gUncoarsen(int *match, int *flinkedlist, int *blinkedlist, const int nrVertices)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -1175,21 +1175,13 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 		throw exception();
 	}
 
-	thrust::device_vector<int>H(graph.nrVertices);
-	thrust::sequence(H.begin(),H.end());
-	dheads = thrust::raw_pointer_cast(&H[0]);
-	
-	thrust::device_vector<int>T(graph.nrVertices);
-	thrust::sequence(T.begin(),T.end());
-	dtails = thrust::raw_pointer_cast(&T[0]);
-
 	thrust::device_vector<int>dfll(graph.nrVertices);
 	thrust::sequence(dfll.begin(),dfll.end());
 	dforwardlinkedlist = thrust::raw_pointer_cast(&dfll[0]);
 	
-	thrust::device_vector<int>bll(graph.nrVertices);
-	thrust::sequence(bll.begin(),bll.end());
-	dbackwardlinkedlist = thrust::raw_pointer_cast(&bll[0]);
+	thrust::device_vector<int>dbll(graph.nrVertices);
+	thrust::sequence(dbll.begin(),dbll.end());
+	dbackwardlinkedlist = thrust::raw_pointer_cast(&dbll[0]);
 
 	//Perform matching.
 	int blocksPerGrid = (graph.nrVertices + threadsPerBlock - 1)/threadsPerBlock;
@@ -1259,8 +1251,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 
 	// call uncoarsen for viz
 	#ifdef UNCOARSEN_GRAPH	
-	gUncoarsen<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dheads, dtails, 
-													dforwardlinkedlist, dbackwardlinkedlist, 
+	gUncoarsen<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
 													graph.nrVertices);
 	#endif
 
@@ -1272,9 +1263,8 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	}
 
 	//Copy obtained matching on the device back to the host.
-	if (cudaMemcpy(&h[0], dheads, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess ||
-		cudaMemcpy(&t[0], dtails, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess ||
-		cudaMemcpy(&fll[0], dforwardlinkedlist, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess)
+	if (cudaMemcpy(&fll[0], dforwardlinkedlist, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess ||
+		cudaMemcpy(&bll[0], dbackwardlinkedlist, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess)
 	{
 		cerr << "Unable to retrieve data!" << endl;
 		throw exception();
