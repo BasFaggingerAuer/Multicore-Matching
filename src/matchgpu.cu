@@ -428,26 +428,40 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
 		if (requests[r] == i){
 			// No race-conditions:
-			// + sense: read heads[r] and write into heads[i], tails[i] unchanged.
-			// - sense: read tails[r] and write into tails[i], heads[i] unchanged.
+			// Since color and sense can be randomly swapped
+			// We need to determine the head or tail status
+			// of each and update the LL's accordingly
+			// Color and sense are just to prevent race conditions
+			// They have no bearing on the order of the LL's
+			// forward (towards tail) and backward (towards head) 
+			//directions
+			int myHead = heads[i];
+			int myTail = tails[i];
+			int ImAHead = myHead == i;
+			int partnersHead = heads[r];
+			int partnersTail = tails[r];
+			int partnerIsAHead = partnersHead == r;
 
-			if(sense[i]){ 
-				// Negative sense, update tail
-				tails[i] = tails[r];
-				printf("tail %d\n", tails[i]);
-				// heads[i] isn't thread-sensitive since I am the (-) end
-				match[tails[i]] = 4 + min(heads[i], tails[i]);
-				blinkedlist[i] = r;
-			} else {
-				// Positive sense, update head
+			if(ImAHead){
 				// Update head
-				heads[i] = heads[r];
-				// tails[i] isn't thread-sensitive since I am the (+) end
+				if(partnerIsAHead)
+					heads[i] = tails[r];
+				else
+					heads[i] = heads[r];
+				
 				match[heads[i]] = 4 + min(heads[i], tails[i]);
-				flinkedlist[i] = r;
-			}
+				blinkedlist[i] = r;
 
-			//printf("SUCCESS\n");
+			} else {
+				// Update head
+				if(partnerIsAHead)
+					tails[i] = tails[r];
+				else
+					tails[i] = heads[r];	
+				
+				match[tails[i]] = 4 + min(heads[i], tails[i]);
+				flinkedlist[i] = r;		
+			}
 		}
 	}
 }
