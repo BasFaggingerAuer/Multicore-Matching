@@ -479,6 +479,113 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 		}
 	}
 }
+
+__global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
+{
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+
+	const int r = requests[i];
+
+	// Only unmatched vertices make requests.
+	// Need to reset this every coarsening iteration for head and tails?
+	if (r == nrVertices + 1)
+	{
+		// This is vertex Blue(+) without any Blue or Red neighbors
+		// Discard it and flip sense.
+		match[i] = 2;
+	}
+	// Only true if a B+ is neighbors with a R- 
+	// The pairing might have not occurred because of competition.
+	else if (r < nrVertices)
+	{
+		// This vertex has made a valid request.
+		// Match the vertices if the request was mutual.
+		// R+ paired with a B-  -> R+.R- or B+.B-
+		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
+		if (requests[r] == i){
+			// Doubly linked list allows for easy list joining
+			int myHead = heads[i];
+			int ImAHead = myHead == i;
+			int partnersHead = heads[r];
+			int partnerIsAHead = partnersHead == r;
+
+			int myTail = tails[i];
+			int partnersTail = tails[r];
+			int ImATail = myTail == i;
+			int partnerIsATail = partnersTail == r;
+			if (!partnerIsAHead && !partnersTail)
+				printf("ERROR: I (%d) am matching with an internal path vertex (%d)!!!\n", i, r);
+			if (!ImAHead && !ImATail)
+				printf("ERROR: I (%d) am an active internal path vertex!!!\n", i);
+
+			if(ImAHead){
+				// Update head
+				if(partnerIsAHead){
+					//                               ----------  
+					//                               |        ^
+					//                               v        |
+					// B+.B- paired with a +R.R-  -> B-.B+.R-.R+
+					// H  T                 T H         T  H  
+					// Notice only my tails or my heads are modified, therefore
+					// there is no race.
+					if(sense[i]){ 
+						tails[i] = partnersHead;
+						tails[myTail] = partnersHead;
+					} else {
+						heads[i] = partnersHead;
+						heads[myHead] = partnersHead;
+					}
+				//                               ----------  
+				//                               |        ^
+				//                               v        |
+				// B+.B- paired with a +R.R-  -> R-.R+.B-.B+
+				// H  T                 H T         T  H  
+				} else {
+					// Sets B+
+					heads[i] = myTail;
+					tails[i] = partnersHead;
+					// Sets R- head
+					tails[myTail] = myHead;
+				}
+			} else {
+				//                               ----------  
+				//                               |        ^
+				//                               v        |
+				// B+.B- paired with a +R.R-  -> R-.R+.B-.B+
+				// H  T                 H T         T  H  
+				if(partnerIsAHead){
+					// Sets B-
+					int myHeadsNext = forwardlinkedlist[myHead];
+					heads[myHeadsNext] = myHeadsNext;
+					tails[myHeadsNext] = myHead;
+					// Sets R- tail
+					tails[i] = myHead;
+				} else{
+					//                               ----------  
+					//                               |        ^
+					//                               v        |
+					// B-.B+ paired with a -R.R+  -> B-.B+.R-.R+
+					// H  T                 T H      H        T
+					// Since there is a mix of heads assigned to tails
+					// races exist.  Use the next-> relationship to assign
+					if(sense[i]){ 
+						tails[i] = myHead;
+						heads[i] = forwardlinkedlist[myHead];
+						tails[myHead] = myHead;
+						heads[myHead] =  forwardlinkedlist[myHead];
+						tails[partnersHead] = myHead;
+						tails[partnersTail] = myHead;
+					} else {
+						// Do nothing
+						// This imbalance is a result of only have 1 directional ll.
+					}
+				}
+			}
+		}
+	}
+}
 /**
 Precondition: Graph is composed of colored heads and tails with 
 dead internal path nodes.  Also, there are entirely dead nodes/paths.
@@ -847,7 +954,7 @@ void GraphMatchingGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1
 		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, graph.nrVertices);
 		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, graph.nrVertices);
 		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, drequests, graph.nrVertices);
-
+		gUpdateHeadTail<<<blocksPerGrid, threadsPerBlock>>>(dmatch, drequests, graph.nrVertices);
 #ifdef MATCH_INTERMEDIATE_COUNT
 		cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
 		
