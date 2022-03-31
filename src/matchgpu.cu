@@ -440,7 +440,7 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 			int partnersHead = heads[r];
 			int partnerIsAHead = partnersHead == r;
 
-			#ifndef NDEBUG
+			//#ifndef NDEBUG
 			int myTail = tails[i];
 			int partnersTail = tails[r];
 			int ImATail = myTail == i;
@@ -449,7 +449,7 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 				printf("ERROR: I (%d) am matching with an internal path vertex (%d)!!!\n", i, r);
 			if (!ImAHead && !ImATail)
 				printf("ERROR: I (%d) am an active internal path vertex!!!\n", i);
-			#endif
+			//#endif
 
 
 			if(ImAHead){
@@ -463,12 +463,39 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 				blinkedlist[i] = r;
 
 			} else {
-				// Update head
-				if(partnerIsAHead)
+				// Update tail
+				if(partnerIsAHead){
 					tails[i] = tails[r];
-				else
+				} else{
+					// We're both tails, someone's head has to win
+					// Use match instead of raw index because it is
+					// hashed so thoroughly to avoid bias.
+					if(sense[i]){ 
+						tails[i] = tails[r];
+						printf("tail %d\n", tails[i]);
+						// heads[i] isn't thread-sensitive since I am the (-) end
+						match[tails[i]] = 4 + min(heads[i], tails[i]);
+					} else {
+						// Positive sense, reverse negative sense linked list
+						int curr, next;
+						curr = i;
+						next = r;
+						flinkedlist[curr] = next;
+						curr = next;
+						do {
+							next = blinkedlist[curr];
+							flinkedlist[curr] = next;
+							curr = next;
+						} while (curr != partnersHead)
+						flinkedlist[curr] = curr;
+						// Update head
+						tails[r] = heads[r];
+						// tails[i] isn't thread-sensitive since I am the (+) end
+						match[heads[i]] = 4 + min(heads[i], tails[i]);
+					}
+					min(match[i], match[r])
 					tails[i] = heads[r];	
-				
+				}
 				match[tails[i]] = 4 + min(heads[i], tails[i]);
 				flinkedlist[i] = r;		
 			}
