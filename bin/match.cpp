@@ -63,32 +63,42 @@ void writeGraphViz(std::vector<int> & match,
 	std::map<std::string, DotWriter::Node *>::const_iterator nodeIt2;
 
     for (int i = 0; i < g.nrVertices; ++i){
-		curr = i;
-		next = fll[curr];
-		std::string node1Name = SSTR(curr);
+		// skip singletons
+		if (fll[i] == i && bll[i] == i)
+			continue;
+		// Start from heads only
+		if (bll[i] == i){
+			curr = i;
+			next = fll[curr];
+			while(curr != next){
+				std::string node1Name = SSTR(curr);
+				nodeIt1 = nodeMap.find(node1Name);
+				if(nodeIt1 == nodeMap.end()){
+					nodeMap[node1Name] = graph->AddNode(node1Name);
+					nodeMap[node1Name]->GetAttributes().SetColor(DotWriter::Color::e(match[curr]));
+					nodeMap[node1Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[curr]));
+					nodeMap[node1Name]->GetAttributes().SetStyle("filled");
+				}
+				std::string node2Name = SSTR(next);
+				nodeIt2 = nodeMap.find(node2Name);
+				if(nodeIt1 == nodeMap.end()){
+					nodeMap[node2Name] = graph->AddNode(node2Name);
+					nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[next]));
+					nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[next]));
+					nodeMap[node2Name]->GetAttributes().SetStyle("filled");
+				}
+				//graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name], SSTR(host_levels[i]));
+				nodeIt1 = nodeMap.find(node1Name);
+				nodeIt2 = nodeMap.find(node2Name);
 
-		nodeIt1 = nodeMap.find(node1Name);
-		if(nodeIt1 != nodeMap.end()){
-			nodeMap[node1Name] = graph->AddNode(node1Name);
-			nodeMap[node1Name]->GetAttributes().SetColor(DotWriter::Color::e(match[curr]));
-			nodeMap[node1Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[curr]));
-			nodeMap[node1Name]->GetAttributes().SetStyle("filled");
-		}
-		std::string node2Name = SSTR(next);
-		nodeIt2 = nodeMap.find(node2Name);
-		if(nodeIt1 != nodeMap.end()){
-			nodeMap[node2Name] = graph->AddNode(node2Name);
-			nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[next]));
-			nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[next]));
-			nodeMap[node2Name]->GetAttributes().SetStyle("filled");
-		}
-		//graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name], SSTR(host_levels[i]));
-		nodeIt1 = nodeMap.find(node1Name);
-		nodeIt2 = nodeMap.find(node2Name);
+				if(nodeIt1 != nodeMap.end() && nodeIt2 != nodeMap.end()) 
+					graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
 
-		if(nodeIt1 != nodeMap.end() && nodeIt2 != nodeMap.end()) 
-			graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
-    }
+				curr = next; 
+				next = fll[curr];
+			}
+		}
+	}
     gVizWriter.WriteToFile(fileName_arg);
 
 	std::cout << "Wrote graph viz " << fileName_arg << std::endl;

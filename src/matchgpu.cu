@@ -1165,7 +1165,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	// dtails - to quickly flip sense of strand
 	// dmatch - same as singleton implementation
 	// dsense - indicates directionality of strand
-	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense, *dheads, *dtails;
+	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense;
 
 	if (cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
 		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
