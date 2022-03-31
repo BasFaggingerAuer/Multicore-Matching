@@ -436,11 +436,21 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 			// forward (towards tail) and backward (towards head) 
 			//directions
 			int myHead = heads[i];
-			int myTail = tails[i];
 			int ImAHead = myHead == i;
 			int partnersHead = heads[r];
-			int partnersTail = tails[r];
 			int partnerIsAHead = partnersHead == r;
+
+			#ifndef NDEBUG
+			int myTail = tails[i];
+			int partnersTail = tails[r];
+			int ImATail = myTail == i;
+			int partnerIsATail = partnersTail == r;
+			if (!partnerIsAHead && !partnersTail)
+				printf("ERROR: I (%d) am matching with an internal path vertex (%d)!!!\n", i, r);
+			if (!ImAHead && !ImATail)
+				printf("ERROR: I (%d) am an active internal path vertex!!!\n", i);
+			#endif
+
 
 			if(ImAHead){
 				// Update head
