@@ -738,21 +738,21 @@ Requirement: Matching is completed. Calling this while matching
 will produce incorrect results.
 Usage: Primarily for visualization purposes.
 */
-__global__ void gUncoarsen(int *match, int *flinkedlist, int *blinkedlist, const int nrVertices)
+__global__ void gUncoarsen(int *match, int *fll, int *bll, const int nrVertices)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (i >= nrVertices) return;
 
-    for (int i = 0; i < g.nrVertices; ++i){
+    for (int i = 0; i < nrVertices; ++i){
 		// skip singletons
 		if (fll[i] == i && bll[i] == i)
 			continue;
 		// Start from heads only
 		if (bll[i] == i){
-			curr = i;
+			int curr = i;
 			match[curr] = i + 4;
-			next = fll[curr];
+			int next = fll[curr];
 			while(curr != next){
 				curr = next; 
 				next = fll[curr];
