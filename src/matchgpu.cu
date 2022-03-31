@@ -996,22 +996,15 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 		throw exception();
 	}
 
-	thrust::host_vector<int>htheads;
-	thrust::host_vector<int>httails;
-	thrust::host_vector<int>htforwardlinkedlist;
+	//Copy obtained matching on the device back to the host.
+	if (cudaMemcpy(&h[0], dheads, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess ||
+		cudaMemcpy(&t[0], dtails, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess ||
+		cudaMemcpy(&fll[0], dforwardlinkedlist, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost) != cudaSuccess)
+	{
+		cerr << "Unable to retrieve data!" << endl;
+		throw exception();
+	}
 
-	htheads = H;
-	httails = T;
-	htforwardlinkedlist = fll;
-
-	for (int i = 0; i < httails.size(); ++i)
-		std::cout << "tail " << httails[i] << std::endl;
-
-
-	thrust::copy(htheads.begin(), htheads.end(), h.begin());
-	thrust::copy(httails.begin(), httails.end(), t.begin());
-	thrust::copy(htforwardlinkedlist.begin(), htforwardlinkedlist.end(), fll.begin());
-	std::cout << "finishd copying" << std::endl;
 	//Free memory.
 	cudaFree(drequests);
 	cudaFree(dmatch);
