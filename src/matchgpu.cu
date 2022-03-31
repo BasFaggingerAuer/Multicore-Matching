@@ -428,7 +428,8 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 	}
 }
 
-__global__ void gMatch(int *match, int *sense, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices){
+__global__ void gMatch(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
+
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (i >= nrVertices) return;
@@ -451,11 +452,38 @@ __global__ void gMatch(int *match, int *sense, int *flinkedlist, int *blinkedlis
 		// Match the vertices if the request was mutual.
 		// R+ paired with a B-  -> R+.R- or B+.B-
 		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
-		if (requests[r] == i){
-			if(sense[i])
-				blinkedlist[i] = r;
-			else
-				flinkedlist[i] = r;
+		// Only set the forward and reverse from blue to prevent race
+		if (requests[r] == i && match[0]){
+
+			// Is this vertex a head or a tail? Else decolor
+			bool isATail = fll[i] == i;
+			bool isAHead = bll[i] == i;
+			bool isAsingleton = (isATail && isAHead);
+
+			bool isRATail = fll[r] == r;
+			bool isRAHead = bll[r] == r;
+			bool isRAsingleton = (isRATail && isRAHead);
+
+			if (isAsingleton && isRAsingleton){
+				fll[i] = r;
+				bll[r] = i;
+			} else if (isAsingleton) {
+				if(isRATail){
+					fll[r] = i;
+					bll[i] = r;
+				} else {
+					fll[i] = r;
+					bll[r] = i;				
+				}
+			}
+
+			if(isATail){
+				fll[i] = r;
+				bll[r] = i;
+			} else {
+				fll[r] = i;
+				bll[i] = r;				
+			}
 		}
 	}
 }
