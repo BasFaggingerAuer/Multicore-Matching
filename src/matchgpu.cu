@@ -433,14 +433,13 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 
 			if(sense[i]){ 
 				// Negative sense, update head
-				tails[i] = tails[r];
-				printf("tail %d\n", tails[i]);
+				heads[i] = heads[r];
 				// heads[i] isn't thread-sensitive since I am the (-) end
 				match[tails[i]] = 4 + min(heads[i], tails[i]);
 			} else {
 				// Positive sense, update tail
+				tails[i] = tails[r];
 				// Update head
-				heads[i] = heads[r];
 				// tails[i] isn't thread-sensitive since I am the (+) end
 				match[heads[i]] = 4 + min(heads[i], tails[i]);
 			}
