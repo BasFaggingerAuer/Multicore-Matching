@@ -453,7 +453,7 @@ __global__ void gMatch(int *match, int *sense, int *fll, int *bll, const int *re
 		// R+ paired with a B-  -> R+.R- or B+.B-
 		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
 		// Only set the forward and reverse from blue to prevent race
-		if (requests[r] == i && match[0]){
+		if (requests[r] == i){
 
 			// Is this vertex a head or a tail? Else decolor
 			bool isATail = fll[i] == i;
@@ -464,26 +464,19 @@ __global__ void gMatch(int *match, int *sense, int *fll, int *bll, const int *re
 			bool isRAHead = bll[r] == r;
 			bool isRAsingleton = (isRATail && isRAHead);
 
-			if (isAsingleton && isRAsingleton){
-				fll[i] = r;
-				bll[r] = i;
-			} else if (isAsingleton) {
-				if(isRATail){
-					fll[r] = i;
-					bll[i] = r;
-				} else {
+			// We can't handle two singletons..
+			if(isAsingleton){
+				if(isRAHead)
 					fll[i] = r;
-					bll[r] = i;				
-				}
+				if(isRATail)
+					bll[i] = r;	
 			}
 
-			if(isATail){
+			if(isATail)
 				fll[i] = r;
-				bll[r] = i;
-			} else {
-				fll[r] = i;
+			if(isAHead)
 				bll[i] = r;				
-			}
+			
 		}
 	}
 }
