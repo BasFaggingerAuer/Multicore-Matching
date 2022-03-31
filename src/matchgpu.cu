@@ -437,9 +437,13 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 			int partnersTail = tails[r];
 			int ImATail = myTail == i;
 			int partnerIsATail = partnersTail == r;
-			if (!partnerIsAHead && !partnersTail)
+
+			int ImASingleton = ImAHead && ImATail;
+			int partnerIsASingleton = partnerIsAHead && partnerIsATail;
+
+			if (!partnerIsAHead && !partnersTail && !partnerIsASingleton)
 				printf("ERROR: I (%d) am matching with an internal path vertex (%d)!!!\n", i, r);
-			if (!ImAHead && !ImATail)
+			if (!ImAHead && !ImATail && !ImASingleton)
 				printf("ERROR: I (%d) am an active internal path vertex!!!\n", i);
 
 			if(ImAHead){
