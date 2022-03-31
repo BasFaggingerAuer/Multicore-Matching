@@ -912,14 +912,6 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::sequence(bll.begin(),bll.end());
 	dbackwardlinkedlist = thrust::raw_pointer_cast(&bll[0]);
 
-	//Clear matching.
-	if (cudaMemset(dforwardlinkedlist, 0, sizeof(int)*graph.nrVertices) != cudaSuccess ||
-		cudaMemset(dbackwardlinkedlist, 0, sizeof(int)*graph.nrVertices))
-	{
-		cerr << "Unable to clear matching on device!" << endl;
-		throw exception();
-	}
-
 	//Perform matching.
 	int blocksPerGrid = (graph.nrVertices + threadsPerBlock - 1)/threadsPerBlock;
 	
