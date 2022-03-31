@@ -427,20 +427,12 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 		// R+ paired with a B-  -> R+.R- or B+.B-
 		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
 		if (requests[r] == i){
-			// No race-conditions:
-			// Since color and sense can be randomly swapped
-			// We need to determine the head or tail status
-			// of each and update the LL's accordingly
-			// Color and sense are just to prevent race conditions
-			// They have no bearing on the order of the LL's
-			// forward (towards tail) and backward (towards head) 
-			//directions
+			// Doubly linked list allows for easy list joining
 			int myHead = heads[i];
 			int ImAHead = myHead == i;
 			int partnersHead = heads[r];
 			int partnerIsAHead = partnersHead == r;
 
-			//#ifndef NDEBUG
 			int myTail = tails[i];
 			int partnersTail = tails[r];
 			int ImATail = myTail == i;
@@ -449,12 +441,15 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 				printf("ERROR: I (%d) am matching with an internal path vertex (%d)!!!\n", i, r);
 			if (!ImAHead && !ImATail)
 				printf("ERROR: I (%d) am an active internal path vertex!!!\n", i);
-			//#endif
-
 
 			if(ImAHead){
 				// Update head
 				if(partnerIsAHead){
+					//                               ----------  
+					//                               |        ^
+					//                               v        |
+					// B+.B- paired with a +R.R-  -> B-.B+.R-.R+
+					// H  T                 T H         T  H  
 					if(sense[i]){ 
 						flinkedlist[myTail] = partnersTail;
 					} else {
@@ -468,6 +463,12 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 				if(partnerIsAHead){
 					flinkedlist[myHead] = tails[r];
 				} else{
+					//                               ----------  
+					//                               |        ^
+					//                               v        |
+					// B-.B+ paired with a -R.R+  -> B-.B+.R-.R+
+					// H  T                 T H      H        T
+
 					if(sense[i]){ 
 						flinkedlist[myHead] = partnersHead;
 					} else {
