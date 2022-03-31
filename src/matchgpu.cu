@@ -568,40 +568,44 @@ __global__ void gUpdateHeadTail(int *match, int *sense, int *flinkedlist, int *b
 	// The pairing might have not occurred because of competition.
 	else if (r < nrVertices)
 	{
-		// FWR Dir
-		int curr = i;
-		int next = flinkedlist[curr];
-		int forwardEnd;
-		// Find the end in the forward dir
-		while(next != curr){
-			curr = next; 
-			next = flinkedlist[curr];
-		}
-		forwardEnd = curr;
+		//This vertex has made a valid request.
+		if (requests[r] == i)
+		{
+			// FWR Dir
+			int curr = i;
+			int next = flinkedlist[curr];
+			int forwardEnd;
+			// Find the end in the forward dir
+			while(next != curr){
+				curr = next; 
+				next = flinkedlist[curr];
+			}
+			forwardEnd = curr;
 
-		int backwardEnd;
+			int backwardEnd;
 
-		curr = i;
-		next = blinkedlist[curr];
-		// Find the end in the backward dir
-		while(next != curr){
-			curr = next; 
+			curr = i;
 			next = blinkedlist[curr];
-		}
+			// Find the end in the backward dir
+			while(next != curr){
+				curr = next; 
+				next = blinkedlist[curr];
+			}
 
-		backwardEnd = curr;
+			backwardEnd = curr;
 
-		// Option 1
-		match[forwardEnd] = 4 + min(forwardEnd, backwardEnd);
-		match[backwardEnd] = 4 + min(forwardEnd, backwardEnd);
-
-		// Option 2
-		/*
-		if(sense[i])
+			// Option 1
 			match[forwardEnd] = 4 + min(forwardEnd, backwardEnd);
-		else
 			match[backwardEnd] = 4 + min(forwardEnd, backwardEnd);
-		*/
+
+			// Option 2
+			/*
+			if(sense[i])
+				match[forwardEnd] = 4 + min(forwardEnd, backwardEnd);
+			else
+				match[backwardEnd] = 4 + min(forwardEnd, backwardEnd);
+			*/
+		}
 	}
 }
 
