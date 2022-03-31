@@ -428,7 +428,134 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 	}
 }
 
-__global__ void gMatch(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
+__global__ void gMatchBlueSingletons(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
+
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+
+	const int r = requests[i];
+
+	// Only unmatched vertices make requests.
+	// Need to reset this every coarsening iteration for head and tails?
+	if (r == nrVertices + 1)
+	{
+		// This is vertex Blue(+) without any Blue or Red neighbors
+		// Discard it and flip sense.
+		match[i] = 2;
+	}
+	// Only true if a B+ is neighbors with a R- 
+	// The pairing might have not occurred because of competition.
+	else if (r < nrVertices)
+	{
+		// This vertex has made a valid request.
+		// Match the vertices if the request was mutual.
+		// R+ paired with a B-  -> R+.R- or B+.B-
+		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
+		// Only set the forward and reverse from blue to prevent race
+		if (requests[r] == i  && match[i] == 0){
+
+			// Is this vertex a head or a tail? Else decolor
+			bool isATail = fll[i] == i;
+			bool isAHead = bll[i] == i;
+			bool isAsingleton = (isATail && isAHead);
+
+			bool isRATail = fll[r] == r;
+			bool isRAHead = bll[r] == r;
+			bool isRAsingleton = (isRATail && isRAHead);
+
+			if(isAsingleton && isRAsingleton){
+				fll[i] = r;
+				bll[r] = i;	
+			} else if (isAsingleton) {
+				if(isRATail){
+					bll[i] = r;
+					fll[r] = i;
+				} else {
+					bll[r] = i;
+					fll[i] = r;			
+				}	
+			} else if (isRAsingleton) {
+				if(isATail){
+					bll[r] = i;
+					fll[i] = r;
+				} else {
+					bll[i] = r;
+					fll[r] = i;			
+				}		
+			} else {
+				// Reverse linked list, no way around it
+				if(isATail && isRATail){
+					fll[i] = r;
+					fll[i] = r;
+				} 
+				if (isATail && isRAHead) {
+					bll[i] = r;
+				}		
+				if (isAHead && isRATail) {
+					bll[i] = r;
+				}		
+				// Reverse linked list, no way around it
+				if (isAHead && isRAHead) {
+					bll[i] = r;
+				}		
+			}
+		}
+	}
+}
+
+__global__ void gMatchRedSingletons(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
+
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+
+	const int r = requests[i];
+
+	// Only unmatched vertices make requests.
+	// Need to reset this every coarsening iteration for head and tails?
+	if (r == nrVertices + 1)
+	{
+		// This is vertex Blue(+) without any Blue or Red neighbors
+		// Discard it and flip sense.
+		match[i] = 2;
+	}
+	// Only true if a B+ is neighbors with a R- 
+	// The pairing might have not occurred because of competition.
+	else if (r < nrVertices)
+	{
+		// This vertex has made a valid request.
+		// Match the vertices if the request was mutual.
+		// R+ paired with a B-  -> R+.R- or B+.B-
+		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
+		// Only set the forward and reverse from blue to prevent race
+		if (requests[r] == i  && match[i] == 1){
+
+			// Is this vertex a head or a tail? Else decolor
+			bool isATail = fll[i] == i;
+			bool isAHead = bll[i] == i;
+			bool isAsingleton = (isATail && isAHead);
+
+			bool isRATail = fll[r] == r;
+			bool isRAHead = bll[r] == r;
+			bool isRAsingleton = (isRATail && isRAHead);
+
+			// We can't handle two singletons..
+			if(isAsingleton && isRAsingleton){
+				fll[i] = r;
+				bll[r] = i;	
+			}
+
+			if(isATail)
+				fll[i] = r;
+			if(isAHead)
+				bll[i] = r;				
+			
+		}
+	}
+}
+
+__global__ void gMatchSets(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
 
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -480,8 +607,6 @@ __global__ void gMatch(int *match, int *sense, int *fll, int *bll, const int *re
 		}
 	}
 }
-
-
 
 __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flinkedlist, const int *requests, const int nrVertices)
 {
