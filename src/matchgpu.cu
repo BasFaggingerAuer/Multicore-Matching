@@ -737,42 +737,31 @@ Postcondition: Graph is paritioned into sets with unique colors.
 Requirement: Matching is completed. Calling this while matching 
 will produce incorrect results.
 Usage: Primarily for visualization purposes.
-
+*/
 __global__ void gUncoarsen(int *match, int *flinkedlist, int *blinkedlist, const int nrVertices)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (i >= nrVertices) return;
-	uint head = heads[i];
-	// Only color from heads to prevent unneccessary work.
-	if (head != i) return;
-	uint tail = tails[i];
-	int color = match[i];
-	// Entirely dead paths need to be revived.
-	// Also unmatched red/blues need to given a unique color.
-	if (color < 4){
-		color = i;
-		match[i] = color;
-	}
-	uint next = flinkedlist[i];
-	uint prev = blinkedlist[i];
-	bool directionToTail;
-	// Equivalent to checking if head=tail
-	if (next == prev)
-		return;
-	else if (next == i)
-		directionToTail = 0;
-	else
-		directionToTail = 1;
 
-	do {
-		match[i] = color;
-		i = (directionToTail ? flinkedlist[i] : blinkedlist[i]);
-	} while (tail != i);
-	// Color tail
-	match[i] = color;
+    for (int i = 0; i < g.nrVertices; ++i){
+		// skip singletons
+		if (fll[i] == i && bll[i] == i)
+			continue;
+		// Start from heads only
+		if (bll[i] == i){
+			curr = i;
+			match[curr] = i + 4;
+			next = fll[curr];
+			while(curr != next){
+				curr = next; 
+				next = fll[curr];
+				match[next] = i + 4;
+			}
+		}
+	}
 }
-*/
+
 //==== Random greedy matching kernels ====
 __global__ void grRequest(int *requests, const int *match, const int nrVertices)
 {
@@ -1251,8 +1240,8 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 
 	// call uncoarsen for viz
 	#ifdef UNCOARSEN_GRAPH	
-	//gUncoarsen<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
-	//												graph.nrVertices);
+	gUncoarsen<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
+													graph.nrVertices);
 	#endif
 
 	//Copy obtained matching on the device back to the host.
