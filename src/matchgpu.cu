@@ -557,7 +557,7 @@ __global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, 
 				// H  T                 H T         T  H  
 				if(partnerIsAHead){
 					// Sets B-
-					int myHeadsNext = forwardlinkedlist[myHead];
+					int myHeadsNext = flinkedlist[myHead];
 					heads[myHeadsNext] = myHeadsNext;
 					tails[myHeadsNext] = myHead;
 					// Sets R- tail
@@ -572,9 +572,9 @@ __global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, 
 					// races exist.  Use the next-> relationship to assign
 					if(sense[i]){ 
 						tails[i] = myHead;
-						heads[i] = forwardlinkedlist[myHead];
+						heads[i] = flinkedlist[myHead];
 						tails[myHead] = myHead;
-						heads[myHead] =  forwardlinkedlist[myHead];
+						heads[myHead] =  flinkedlist[myHead];
 						tails[partnersHead] = myHead;
 						tails[partnersTail] = myHead;
 					} else {
@@ -954,7 +954,6 @@ void GraphMatchingGPURandom::performMatching(vector<int> &match, cudaEvent_t &t1
 		grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, graph.nrVertices);
 		grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, graph.nrVertices);
 		gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, drequests, graph.nrVertices);
-		gUpdateHeadTail<<<blocksPerGrid, threadsPerBlock>>>(dmatch, drequests, graph.nrVertices);
 #ifdef MATCH_INTERMEDIATE_COUNT
 		cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
 		
@@ -1083,6 +1082,10 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, 
 														dforwardlinkedlist, dbackwardlinkedlist, 
 														drequests, graph.nrVertices);
+			gUpdateHeadTail<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, 
+														dforwardlinkedlist, dbackwardlinkedlist, 
+														drequests, graph.nrVertices);
+
 
 	#ifdef MATCH_INTERMEDIATE_COUNT
 			cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
