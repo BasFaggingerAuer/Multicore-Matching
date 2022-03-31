@@ -253,33 +253,34 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 
 	uint tail; 
 	uint head;
+	uint g;
 	if (singleton){
 		g = i;
 	} else {
 		if (isAHead){
 			head = i;
 			int curr = i;
-			int next = flinkedlist[curr];
+			int next = fll[curr];
 			// Find the end in the forward dir
 			while(next != curr){
 				curr = next; 
-				next = flinkedlist[curr];
+				next = fll[curr];
 			}
 			tail = curr;
 		} else {
-			tail = i
+			tail = i;
 			int curr = i;
-			int next = blinkedlist[curr];
+			int next = bll[curr];
 			// Find the end in the backward dir
 			while(next != curr){
 				curr = next; 
-				next = blinkedlist[curr];
+				next = bll[curr];
 			}
 			head = curr;
 		}
 		// match heads and tails same match by using min as g.
 		// Hash color of set
-		uint g = min(tail, head);
+		g = min(tail, head);
 	}
 	//Start hashing.
 	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
@@ -550,6 +551,8 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 
 __global__ void gUpdateHeadTail(int *match, int *sense, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
 {
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
 	if (i >= nrVertices) return;
 
 	const int r = requests[i];
@@ -574,7 +577,7 @@ __global__ void gUpdateHeadTail(int *match, int *sense, int *flinkedlist, int *b
 			curr = next; 
 			next = flinkedlist[curr];
 		}
-		forwardEnd = curr
+		forwardEnd = curr;
 
 		int backwardEnd;
 
