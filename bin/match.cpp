@@ -68,8 +68,6 @@ void writeGraphViz(std::vector<int> & match,
 		head = h[i];
 		tail = t[i];
 		curr = i;
-					std::cout << "curr " << curr << "head "  << head << "tail "  << tail << std::endl;
-continue;
 		if(i == head && head != tail){
 			std::cout << "Stop when " << curr << "=="  << tail << std::endl;
 			do {
