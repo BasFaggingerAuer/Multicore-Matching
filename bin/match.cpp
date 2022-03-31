@@ -63,7 +63,6 @@ void writeGraphViz(std::vector<int> & match,
 	std::map<std::string, DotWriter::Node *>::const_iterator nodeIt1;
 	std::map<std::string, DotWriter::Node *>::const_iterator nodeIt2;
 
- // Since the graph doesnt grow uniformly, it is too difficult to only copy the new parts..
     for (int i = 0; i < g.nrVertices; ++i){
 		head = h[i];
 		tail = t[i];

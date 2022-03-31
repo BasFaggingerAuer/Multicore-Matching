@@ -522,7 +522,7 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 }
 
 
-__global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
+__global__ void gUpdateHeadTail(int *match, int *sense, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
 {
 	if (i >= nrVertices) return;
 
@@ -1201,9 +1201,9 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 
 
 														
-			//gUpdateHeadTail<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, 
-			//											dforwardlinkedlist, dbackwardlinkedlist, 
-			//											drequests, graph.nrVertices);
+			gUpdateHeadTail<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, 
+														dforwardlinkedlist, dbackwardlinkedlist, 
+														drequests, graph.nrVertices);
 
 
 	#ifdef MATCH_INTERMEDIATE_COUNT
