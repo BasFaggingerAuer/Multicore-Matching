@@ -401,8 +401,41 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 	}
 }
 
+__global__ void gMatch(int *match, int *sense, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices){
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
-__global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
+	if (i >= nrVertices) return;
+
+	const int r = requests[i];
+
+	// Only unmatched vertices make requests.
+	// Need to reset this every coarsening iteration for head and tails?
+	if (r == nrVertices + 1)
+	{
+		// This is vertex Blue(+) without any Blue or Red neighbors
+		// Discard it and flip sense.
+		match[i] = 2;
+	}
+	// Only true if a B+ is neighbors with a R- 
+	// The pairing might have not occurred because of competition.
+	else if (r < nrVertices)
+	{
+		// This vertex has made a valid request.
+		// Match the vertices if the request was mutual.
+		// R+ paired with a B-  -> R+.R- or B+.B-
+		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
+		if (requests[r] == i){
+			if(sense[i])
+				blinkedlist[i] = r;
+			else
+				flinkedlist[i] = r;
+		}
+	}
+}
+
+
+
+__global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flinkedlist, const int *requests, const int nrVertices)
 {
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -446,6 +479,10 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 			if (!ImAHead && !ImATail)
 				printf("ERROR: I (%d) am an active internal path vertex!!!\n", i);
 
+			if(ImASingleton && partnerIsASingleton){
+				flinkedlist[i] = r;
+			}
+
 			if(ImAHead){
 				// Update head
 				if(partnerIsAHead){
@@ -481,6 +518,61 @@ __global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flin
 				}
 			}
 		}
+	}
+}
+
+
+__global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
+{
+	if (i >= nrVertices) return;
+
+	const int r = requests[i];
+
+	// Only unmatched vertices make requests.
+	// Need to reset this every coarsening iteration for head and tails?
+	if (r == nrVertices + 1)
+	{
+		// This is vertex Blue(+) without any Blue or Red neighbors
+		// Discard it and flip sense.
+		match[i] = 2;
+	}
+	// The pairing might have not occurred because of competition.
+	else if (r < nrVertices)
+	{
+		// FWR Dir
+		int curr = i;
+		int next = flinkedlist[curr];
+		int forwardEnd;
+		// Find the end in the forward dir
+		while(next != curr){
+			curr = next; 
+			next = flinkedlist[curr];
+		}
+		forwardEnd = curr
+
+		int backwardEnd;
+
+		curr = i;
+		next = blinkedlist[curr];
+		// Find the end in the backward dir
+		while(next != curr){
+			curr = next; 
+			next = blinkedlist[curr];
+		}
+
+		backwardEnd = curr;
+
+		// Option 1
+		match[forwardEnd] = 4 + min(forwardEnd, backwardEnd);
+		match[backwardEnd] = 4 + min(forwardEnd, backwardEnd);
+
+		// Option 2
+		/*
+		if(sense[i])
+			match[forwardEnd] = 4 + min(forwardEnd, backwardEnd);
+		else
+			match[backwardEnd] = 4 + min(forwardEnd, backwardEnd);
+		*/
 	}
 }
 
@@ -1102,12 +1194,16 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, graph.nrVertices, rand());
 			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices);
 			grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
-			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, 
+			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, 
 														dforwardlinkedlist, dbackwardlinkedlist, 
 														drequests, graph.nrVertices);
-			gUpdateHeadTail<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, 
-														dforwardlinkedlist, dbackwardlinkedlist, 
-														drequests, graph.nrVertices);
+
+
+
+														
+			//gUpdateHeadTail<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, 
+			//											dforwardlinkedlist, dbackwardlinkedlist, 
+			//											drequests, graph.nrVertices);
 
 
 	#ifdef MATCH_INTERMEDIATE_COUNT
