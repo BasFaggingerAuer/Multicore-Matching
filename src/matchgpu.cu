@@ -231,7 +231,7 @@ __global__ void gSelect(int *match, const int nrVertices, const uint random)
 	match[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
 }
 
-__global__ void gSelect(int *match, int *sense, int *heads, int *tails, const int nrVertices, const uint random)
+__global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int nrVertices, const uint random)
 {
 	//Determine blue and red groups using MD5 hashing.
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
@@ -240,24 +240,50 @@ __global__ void gSelect(int *match, int *sense, int *heads, int *tails, const in
 	if (i >= nrVertices || match[i] >= 2) return;
 
 	// Is this vertex a head or a tail? Else decolor
-	uint tail = tails[i];
-	uint head = heads[i];
-	bool singleton = (head == tail);
-	//if (threadIdx.x == 0)
-	//printf("vertex %d head %d, tail %d\n", i, head, tail);
+	bool isATail = fll[i] == i;
+	bool isAHead = bll[i] == i;
+	bool singleton = (isATail && isAHead);
 
-	if ( head != i && tail != i) match[i] = 2;
+	// Dont color internal vertices
+	if ( !isATail && !isAHead ) match[i] = 2;
 
 	//Can this vertex still be matched?
 	if (match[i] >= 2) return;
 
+
+	uint tail; 
+	uint head;
+	if (singleton){
+		g = i;
+	} else {
+		if (isAHead){
+			head = i;
+			int curr = i;
+			int next = flinkedlist[curr];
+			// Find the end in the forward dir
+			while(next != curr){
+				curr = next; 
+				next = flinkedlist[curr];
+			}
+			tail = curr;
+		} else {
+			tail = i
+			int curr = i;
+			int next = blinkedlist[curr];
+			// Find the end in the backward dir
+			while(next != curr){
+				curr = next; 
+				next = blinkedlist[curr];
+			}
+			head = curr;
+		}
+		// match heads and tails same match by using min as g.
+		// Hash color of set
+		uint g = min(tail, head);
+	}
 	//Start hashing.
 	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
 	uint a = h0, b = h1, c = h2, d = h3, e, f;
-
-	// match heads and tails same match by using min as g.
-	// Hash color of set
-	uint g = min(tail, head);
 
 	for (int j = 0; j < 16; ++j)
 	{
@@ -1191,16 +1217,12 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 
 		for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
 		{
-			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dheads, dtails, graph.nrVertices, rand());
+			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices, rand());
 			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices);
 			grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
 			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, 
 														dforwardlinkedlist, dbackwardlinkedlist, 
-														drequests, graph.nrVertices);
-
-
-
-														
+														drequests, graph.nrVertices);														
 			gUpdateHeadTail<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, 
 														dforwardlinkedlist, dbackwardlinkedlist, 
 														drequests, graph.nrVertices);
