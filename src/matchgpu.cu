@@ -537,9 +537,16 @@ __global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, 
 					if(sense[i]){ 
 						tails[i] = partnersHead;
 						tails[myTail] = partnersHead;
+						
+						match[myTail] = 4 + min(myTail, partnersHead);
+						match[partnersHead] = 4 + min(myTail, partnersHead);
+						
 					} else {
 						heads[i] = partnersHead;
 						heads[myHead] = partnersHead;
+
+						match[myTail] = 4 + min(myTail, partnersHead);
+						match[partnersHead] = 4 + min(myTail, partnersHead);
 					}
 				//                               ----------  
 				//                               |        ^
@@ -552,6 +559,9 @@ __global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, 
 					tails[i] = partnersHead;
 					// Sets R- head
 					tails[myTail] = myHead;
+
+					match[myHead] = 4 + min(myHead, partnersHead);
+					match[partnersHead] = 4 + min(myHead, partnersHead);
 				}
 			} else {
 				//                               ----------  
@@ -566,6 +576,10 @@ __global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, 
 					tails[myHeadsNext] = myHead;
 					// Sets R- tail
 					tails[i] = myHead;
+
+					match[myHead] = 4 + min(myHead, myHeadsNext);
+					match[myHeadsNext] = 4 + min(myHead, myHeadsNext);
+
 				} else{
 					//                               ----------  
 					//                               |        ^
@@ -575,12 +589,17 @@ __global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, 
 					// Since there is a mix of heads assigned to tails
 					// races exist.  Use the next-> relationship to assign
 					if(sense[i]){ 
+						int myHeadsNext = flinkedlist[myHead];
+
 						tails[i] = myHead;
-						heads[i] = flinkedlist[myHead];
+						heads[i] = myHeadsNext;
 						tails[myHead] = myHead;
-						heads[myHead] =  flinkedlist[myHead];
+						heads[myHead] =  myHeadsNext;
 						tails[partnersHead] = myHead;
 						tails[partnersTail] = myHead;
+
+						match[myHead] = 4 + min(myHead, myHeadsNext);
+						match[myHeadsNext] = 4 + min(myHead, myHeadsNext);
 					} else {
 						// Do nothing
 						// This imbalance is a result of only have 1 directional ll.
