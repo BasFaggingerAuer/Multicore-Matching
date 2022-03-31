@@ -737,7 +737,7 @@ Postcondition: Graph is paritioned into sets with unique colors.
 Requirement: Matching is completed. Calling this while matching 
 will produce incorrect results.
 Usage: Primarily for visualization purposes.
-*/
+
 __global__ void gUncoarsen(int *match, int *flinkedlist, int *blinkedlist, const int nrVertices)
 {
 	int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -772,7 +772,7 @@ __global__ void gUncoarsen(int *match, int *flinkedlist, int *blinkedlist, const
 	// Color tail
 	match[i] = color;
 }
-
+*/
 //==== Random greedy matching kernels ====
 __global__ void grRequest(int *requests, const int *match, const int nrVertices)
 {
@@ -1251,8 +1251,8 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 
 	// call uncoarsen for viz
 	#ifdef UNCOARSEN_GRAPH	
-	gUncoarsen<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
-													graph.nrVertices);
+	//gUncoarsen<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
+	//												graph.nrVertices);
 	#endif
 
 	//Copy obtained matching on the device back to the host.
