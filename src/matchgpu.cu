@@ -294,7 +294,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			}
 			head = curr;
 		} else {
-			printf("ERROR: shouldn't ever reach here!\n")
+			printf("ERROR: shouldn't ever reach here!\n");
 		}
 		// match heads and tails same match by using min as g.
 		// Hash color of set
