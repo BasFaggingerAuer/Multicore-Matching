@@ -471,7 +471,6 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 				int curr = head;
 				int next = fll[curr];
 				int prev;
-				int tmp;
 				// Find the end in the forward dir
 				// I know I'm not a singleton, so
 				// there must be at least one vertex
@@ -482,7 +481,7 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 					bll[curr] = next;
 					fll[curr] = prev; 
 					curr = next;
-				} while(next != curr)
+				} while(next != curr);
 				head = curr;
 				tail = i;
 			}
@@ -493,7 +492,6 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 				int curr = tail;
 				int next = bll[curr];
 				int prev;
-				int tmp;
 				// Find the end in the forward dir
 				// I know I'm not a singleton, so
 				// there must be at least one vertex
@@ -504,7 +502,7 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 					bll[curr] = next;
 					fll[curr] = prev; 
 					curr = next;
-				} while(next != curr)
+				} while(next != curr);
 				head = i;
 				tail = curr;
 			}
