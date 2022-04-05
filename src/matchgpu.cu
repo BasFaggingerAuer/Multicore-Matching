@@ -1018,7 +1018,8 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 		for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
 		{
 			printf("Match round %d\n", i);
-			
+			cudaDeviceSynchronize();
+			checkLastErrorCUDA(__FILE__, __LINE__);
 			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices, rand());
 			cudaDeviceSynchronize();
 			checkLastErrorCUDA(__FILE__, __LINE__);
