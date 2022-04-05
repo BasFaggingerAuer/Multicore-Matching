@@ -268,6 +268,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 		g = i;
 	} else {
 		if (isAHead){
+			printf("vert %d, isAHead\n", i);
 			head = i;
 			int curr = i;
 			int next = fll[curr];
@@ -275,9 +276,12 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(next != curr){
 				curr = next; 
 				next = fll[curr];
+				printf("vert %d, looping\n", i);
+
 			}
 			tail = curr;
-		} else {
+		} else if (isATail){
+			printf("vert %d, looping\n", i);
 			tail = i;
 			int curr = i;
 			int next = bll[curr];
@@ -285,8 +289,12 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(next != curr){
 				curr = next; 
 				next = bll[curr];
+				printf("vert %d, looping\n", i);
+
 			}
 			head = curr;
+		} else {
+			printf("ERROR: shouldn't ever reach here!\n")
 		}
 		// match heads and tails same match by using min as g.
 		// Hash color of set
@@ -366,8 +374,8 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 		//bool XOR(bool a, bool b)
 		sense[i] = (a + b) % 2;
 	}
-	//if (threadIdx.x == 0)
-	//printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
+	if (threadIdx.x == 0)
+	printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
 }
 
 __global__ void gaSelect(int *match, const int nrVertices, const uint random)
