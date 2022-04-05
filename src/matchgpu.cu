@@ -254,6 +254,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	uint tail; 
 	uint head;
 	uint g;
+	// This approach prevents needing a datastructure of size 2N, to hold heads/tails
 	if (singleton){
 		g = i;
 	} else {
@@ -314,9 +315,6 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	else
 	{
 		// Currently sense is rehashed every iteration
-		// to prevent this use color==2 to prevent
-		// replace else with 
-		// else if (color != 2)
 		// Hash sense
 		uint g = max(tail, head);
 		bool mask = (g == i);
@@ -428,7 +426,7 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 	}
 }
 
-__global__ void gMatchBlueSingletons(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
+__global__ void gMatch(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
 
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -452,434 +450,79 @@ __global__ void gMatchBlueSingletons(int *match, int *sense, int *fll, int *bll,
 		// Match the vertices if the request was mutual.
 		// R+ paired with a B-  -> R+.R- or B+.B-
 		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
-		// Only set the forward and reverse from blue to prevent race
-		if (requests[r] == i  && match[i] == 0){
+		// Only change fwd and bwd ll of my path to prevent race during LL reversal
+		if (requests[r] == i){
 
 			// Is this vertex a head or a tail? Else decolor
 			bool isATail = fll[i] == i;
 			bool isAHead = bll[i] == i;
 			bool isAsingleton = (isATail && isAHead);
 
-			bool isRATail = fll[r] == r;
-			bool isRAHead = bll[r] == r;
-			bool isRAsingleton = (isRATail && isRAHead);
-
-			if(isAsingleton && isRAsingleton){
-				fll[i] = r;
-				bll[r] = i;	
-			} else if (isAsingleton) {
-				if(isRATail){
-					bll[i] = r;
-					fll[r] = i;
-				} else {
-					bll[r] = i;
-					fll[i] = r;			
-				}	
-			} else if (isRAsingleton) {
-				if(isATail){
-					bll[r] = i;
-					fll[i] = r;
-				} else {
-					bll[i] = r;
-					fll[r] = i;			
-				}		
-			} else {
-				// Reverse linked list, no way around it
-				if(isATail && isRATail){
-					fll[i] = r;
-					fll[i] = r;
-				} 
-				if (isATail && isRAHead) {
-					bll[i] = r;
-				}		
-				if (isAHead && isRATail) {
-					bll[i] = r;
-				}		
-				// Reverse linked list, no way around it
-				if (isAHead && isRAHead) {
-					bll[i] = r;
-				}		
-			}
-		}
-	}
-}
-
-__global__ void gMatchRedSingletons(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
-
-	const int i = blockIdx.x*blockDim.x + threadIdx.x;
-
-	if (i >= nrVertices) return;
-
-	const int r = requests[i];
-
-	// Only unmatched vertices make requests.
-	// Need to reset this every coarsening iteration for head and tails?
-	if (r == nrVertices + 1)
-	{
-		// This is vertex Blue(+) without any Blue or Red neighbors
-		// Discard it and flip sense.
-		match[i] = 2;
-	}
-	// Only true if a B+ is neighbors with a R- 
-	// The pairing might have not occurred because of competition.
-	else if (r < nrVertices)
-	{
-		// This vertex has made a valid request.
-		// Match the vertices if the request was mutual.
-		// R+ paired with a B-  -> R+.R- or B+.B-
-		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
-		// Only set the forward and reverse from blue to prevent race
-		if (requests[r] == i  && match[i] == 1){
-
-			// Is this vertex a head or a tail? Else decolor
-			bool isATail = fll[i] == i;
-			bool isAHead = bll[i] == i;
-			bool isAsingleton = (isATail && isAHead);
-
-			bool isRATail = fll[r] == r;
-			bool isRAHead = bll[r] == r;
-			bool isRAsingleton = (isRATail && isRAHead);
-
-			// We can't handle two singletons..
-			if(isAsingleton && isRAsingleton){
-				fll[i] = r;
-				bll[r] = i;	
-			}
-
-			if(isATail)
-				fll[i] = r;
+			uint tail; 
+			uint head;
 			if(isAHead)
-				bll[i] = r;				
-			
-		}
-	}
-}
-
-__global__ void gMatchSets(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
-
-	const int i = blockIdx.x*blockDim.x + threadIdx.x;
-
-	if (i >= nrVertices) return;
-
-	const int r = requests[i];
-
-	// Only unmatched vertices make requests.
-	// Need to reset this every coarsening iteration for head and tails?
-	if (r == nrVertices + 1)
-	{
-		// This is vertex Blue(+) without any Blue or Red neighbors
-		// Discard it and flip sense.
-		match[i] = 2;
-	}
-	// Only true if a B+ is neighbors with a R- 
-	// The pairing might have not occurred because of competition.
-	else if (r < nrVertices)
-	{
-		// This vertex has made a valid request.
-		// Match the vertices if the request was mutual.
-		// R+ paired with a B-  -> R+.R- or B+.B-
-		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
-		// Only set the forward and reverse from blue to prevent race
-		if (requests[r] == i){
-
-			// Is this vertex a head or a tail? Else decolor
-			bool isATail = fll[i] == i;
-			bool isAHead = bll[i] == i;
-			bool isAsingleton = (isATail && isAHead);
-
-			bool isRATail = fll[r] == r;
-			bool isRAHead = bll[r] == r;
-			bool isRAsingleton = (isRATail && isRAHead);
-
-			// We can't handle two singletons..
-			if(isAsingleton){
-				if(isRAHead)
-					fll[i] = r;
-				if(isRATail)
-					bll[i] = r;	
-			}
-
+				head = i;
 			if(isATail)
+				tail = i;
+			// The blue end always remains the head of the path, therefore:
+			// If a blue head matches, BT-BH<->R(H/T)-R(H/T)
+			// Reverse the blue LL to obtain : BH-BT<->R(H/T)-R(H/T)
+			if(match[i] == 0 && isAHead && !isAsingleton){
+				int curr = head;
+				int next = fll[curr];
+				int prev;
+				int tmp;
+				// Find the end in the forward dir
+				// I know I'm not a singleton, so
+				// there must be at least one vertex
+				// to reverse.
+				do {
+					prev = bll[curr];
+					next = fll[curr];
+					bll[curr] = next;
+					fll[curr] = prev; 
+					curr = next;
+				} while(next != curr)
+				head = curr;
+				tail = i;
+			}
+			// The red end always remains the tail of the path, therefore:
+			// If a red tail matches, B(H/T)-B(H/T)<->RT-RH
+			// Reverse the red LL to obtain : BH-BT<->RH-RT
+			if(match[i] == 1 && isATail && !isAsingleton){
+				int curr = tail;
+				int next = bll[curr];
+				int prev;
+				int tmp;
+				// Find the end in the forward dir
+				// I know I'm not a singleton, so
+				// there must be at least one vertex
+				// to reverse.
+				do {
+					next = bll[curr];
+					prev = fll[curr];
+					bll[curr] = next;
+					fll[curr] = prev; 
+					curr = next;
+				} while(next != curr)
+				head = i;
+				tail = curr;
+			}
+			// With these assumptions, blue matched vertices can always set
+			// next to matched partner
+			if(match[i] == 0)
 				fll[i] = r;
-			if(isAHead)
-				bll[i] = r;				
+			// With these assumptions, red matched vertices can always set
+			// prev to matched partner
+			if(match[i] == 1)
+				bll[i] = r;
 			
+			match[head] = 4 + min(i, r);
+			match[tail] = 4 + min(i, r);
 		}
 	}
 }
 
-__global__ void gMatch(int *match, int *sense, int *heads, int *tails, int *flinkedlist, const int *requests, const int nrVertices)
-{
-	const int i = blockIdx.x*blockDim.x + threadIdx.x;
-
-	if (i >= nrVertices) return;
-
-	const int r = requests[i];
-
-	// Only unmatched vertices make requests.
-	// Need to reset this every coarsening iteration for head and tails?
-	if (r == nrVertices + 1)
-	{
-		// This is vertex Blue(+) without any Blue or Red neighbors
-		// Discard it and flip sense.
-		match[i] = 2;
-	}
-	// Only true if a B+ is neighbors with a R- 
-	// The pairing might have not occurred because of competition.
-	else if (r < nrVertices)
-	{
-		// This vertex has made a valid request.
-		// Match the vertices if the request was mutual.
-		// R+ paired with a B-  -> R+.R- or B+.B-
-		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
-		if (requests[r] == i){
-			// Doubly linked list allows for easy list joining
-			int myHead = heads[i];
-			int ImAHead = myHead == i;
-			int partnersHead = heads[r];
-			int partnerIsAHead = partnersHead == r;
-
-			int myTail = tails[i];
-			int partnersTail = tails[r];
-			int ImATail = myTail == i;
-			int partnerIsATail = partnersTail == r;
-
-			int ImASingleton = ImAHead && ImATail;
-			int partnerIsASingleton = partnerIsAHead && partnerIsATail;
-
-			if (!partnerIsAHead && !partnerIsATail)
-				printf("ERROR: I (%d) am matching with an internal path vertex (%d)!!!\n", i, r);
-			if (!ImAHead && !ImATail)
-				printf("ERROR: I (%d) am an active internal path vertex!!!\n", i);
-
-			if(ImASingleton && partnerIsASingleton){
-				flinkedlist[i] = r;
-			}
-
-			if(ImAHead){
-				// Update head
-				if(partnerIsAHead){
-					//                               ----------  
-					//                               |        ^
-					//                               v        |
-					// B+.B- paired with a +R.R-  -> B-.B+.R-.R+
-					// H  T                 T H         T  H  
-					if(sense[i]){ 
-						flinkedlist[myTail] = partnersTail;
-					} else {
-						flinkedlist[i] = r;
-					}
-				} else {
-					flinkedlist[i] = r;
-				}
-			} else {
-				// Update tail
-				if(partnerIsAHead){
-					flinkedlist[myHead] = tails[r];
-				} else{
-					//                               ----------  
-					//                               |        ^
-					//                               v        |
-					// B-.B+ paired with a -R.R+  -> B-.B+.R-.R+
-					// H  T                 T H      H        T
-
-					if(sense[i]){ 
-						flinkedlist[myHead] = partnersHead;
-					} else {
-						flinkedlist[i] = r;
-					}
-				}
-			}
-		}
-	}
-}
-
-
-__global__ void gUpdateHeadTail(int *match, int *sense, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
-{
-	const int i = blockIdx.x*blockDim.x + threadIdx.x;
-
-	if (i >= nrVertices) return;
-
-	const int r = requests[i];
-
-	// Only unmatched vertices make requests.
-	// Need to reset this every coarsening iteration for head and tails?
-	if (r == nrVertices + 1)
-	{
-		// This is vertex Blue(+) without any Blue or Red neighbors
-		// Discard it and flip sense.
-		match[i] = 2;
-	}
-	// The pairing might have not occurred because of competition.
-	else if (r < nrVertices)
-	{
-		//This vertex has made a valid request.
-		if (requests[r] == i)
-		{
-			// FWR Dir
-			int curr = i;
-			int next = flinkedlist[curr];
-			int forwardEnd;
-			// Find the end in the forward dir
-			while(next != curr){
-				curr = next; 
-				next = flinkedlist[curr];
-			}
-			forwardEnd = curr;
-
-			int backwardEnd;
-
-			curr = i;
-			next = blinkedlist[curr];
-			// Find the end in the backward dir
-			while(next != curr){
-				curr = next; 
-				next = blinkedlist[curr];
-			}
-
-			backwardEnd = curr;
-
-			// Option 1
-			match[forwardEnd] = 4 + min(forwardEnd, backwardEnd);
-			match[backwardEnd] = 4 + min(forwardEnd, backwardEnd);
-
-			// Option 2
-			/*
-			if(sense[i])
-				match[forwardEnd] = 4 + min(forwardEnd, backwardEnd);
-			else
-				match[backwardEnd] = 4 + min(forwardEnd, backwardEnd);
-			*/
-		}
-	}
-}
-
-__global__ void gUpdateHeadTail(int *match, int *sense, int *heads, int *tails, int *flinkedlist, int *blinkedlist, const int *requests, const int nrVertices)
-{
-	const int i = blockIdx.x*blockDim.x + threadIdx.x;
-
-	if (i >= nrVertices) return;
-
-	const int r = requests[i];
-
-	// Only unmatched vertices make requests.
-	// Need to reset this every coarsening iteration for head and tails?
-	if (r == nrVertices + 1)
-	{
-		// This is vertex Blue(+) without any Blue or Red neighbors
-		// Discard it and flip sense.
-		match[i] = 2;
-	}
-	// Only true if a B+ is neighbors with a R- 
-	// The pairing might have not occurred because of competition.
-	else if (r < nrVertices)
-	{
-		// This vertex has made a valid request.
-		// Match the vertices if the request was mutual.
-		// R+ paired with a B-  -> R+.R- or B+.B-
-		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
-		if (requests[r] == i){
-			// Doubly linked list allows for easy list joining
-			int myHead = heads[i];
-			int ImAHead = myHead == i;
-			int partnersHead = heads[r];
-			int partnerIsAHead = partnersHead == r;
-
-			int myTail = tails[i];
-			int partnersTail = tails[r];
-			int ImATail = myTail == i;
-			int partnerIsATail = partnersTail == r;
-			if (!partnerIsAHead && !partnersTail)
-				printf("ERROR: I (%d) am matching with an internal path vertex (%d)!!!\n", i, r);
-			if (!ImAHead && !ImATail)
-				printf("ERROR: I (%d) am an active internal path vertex!!!\n", i);
-
-			if(ImAHead){
-				// Update head
-				if(partnerIsAHead){
-					//                               ----------  
-					//                               |        ^
-					//                               v        |
-					// B+.B- paired with a +R.R-  -> B-.B+.R-.R+
-					// H  T                 T H         T  H  
-					// Notice only my tails or my heads are modified, therefore
-					// there is no race.
-					if(sense[i]){ 
-						tails[i] = partnersHead;
-						tails[myTail] = partnersHead;
-
-						match[myTail] = 4 + min(myTail, partnersHead);
-						match[partnersHead] = 4 + min(myTail, partnersHead);
-						
-					} else {
-						heads[i] = partnersHead;
-						heads[myHead] = partnersHead;
-
-						match[myTail] = 4 + min(myTail, partnersHead);
-						match[partnersHead] = 4 + min(myTail, partnersHead);
-					}
-				//                               ----------  
-				//                               |        ^
-				//                               v        |
-				// B+.B- paired with a +R.R-  -> R-.R+.B-.B+
-				// H  T                 H T         T  H  
-				} else {
-					// Sets B+
-					heads[i] = myTail;
-					tails[i] = partnersHead;
-					// Sets R- head
-					tails[myTail] = myHead;
-
-					match[myHead] = 4 + min(myHead, partnersHead);
-					match[partnersHead] = 4 + min(myHead, partnersHead);
-				}
-			} else {
-				//                               ----------  
-				//                               |        ^
-				//                               v        |
-				// B+.B- paired with a +R.R-  -> R-.R+.B-.B+
-				// H  T                 H T         T  H  
-				if(partnerIsAHead){
-					// Sets B-
-					int myHeadsNext = flinkedlist[myHead];
-					heads[myHeadsNext] = myHeadsNext;
-					tails[myHeadsNext] = myHead;
-					// Sets R- tail
-					tails[i] = myHead;
-
-					match[myHead] = 4 + min(myHead, myHeadsNext);
-					match[myHeadsNext] = 4 + min(myHead, myHeadsNext);
-
-				} else{
-					//                               ----------  
-					//                               |        ^
-					//                               v        |
-					// B-.B+ paired with a -R.R+  -> B-.B+.R-.R+
-					// H  T                 T H      H        T
-					// Since there is a mix of heads assigned to tails
-					// races exist.  Use the next-> relationship to assign
-					if(sense[i]){ 
-						int myHeadsNext = flinkedlist[myHead];
-
-						tails[i] = myHead;
-						heads[i] = myHeadsNext;
-						tails[myHead] = myHead;
-						heads[myHead] =  myHeadsNext;
-						tails[partnersHead] = myHead;
-						tails[partnersTail] = myHead;
-
-						match[myHead] = 4 + min(myHead, myHeadsNext);
-						match[myHeadsNext] = 4 + min(myHead, myHeadsNext);
-					} else {
-						// Do nothing
-						// This imbalance is a result of only have 1 directional ll.
-					}
-				}
-			}
-		}
-	}
-}
 /**
 Precondition: Graph is composed of colored heads and tails with 
 dead internal path nodes.  Also, there are entirely dead nodes/paths.
