@@ -1016,10 +1016,11 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			cout << i + 1 << "\t" << weight << "\t" << size << endl;
 	#endif
 		}
-		
-		cudaEventRecord(t2, 0);
-		cudaEventSynchronize(t2);
 	}
+
+	cudaEventRecord(t2, 0);
+	cudaEventSynchronize(t2);
+
 #ifndef NDEBUG
 	cudaError_t error;
 
