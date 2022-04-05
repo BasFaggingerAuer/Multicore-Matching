@@ -246,7 +246,13 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
+	printf("vert %d, entered gSel\n", i);
+
+
 	if (i >= nrVertices || match[i] >= 2) return;
+
+	printf("vert %d, made it past first ret\n", i);
+
 
 	// Is this vertex a head or a tail? Else decolor
 	bool isATail = fll[i] == i;
@@ -259,6 +265,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	//Can this vertex still be matched?
 	if (match[i] >= 2) return;
 
+	printf("vert %d, made it to color stage\n", i);
 
 	uint tail; 
 	uint head;
@@ -374,7 +381,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 		//bool XOR(bool a, bool b)
 		sense[i] = (a + b) % 2;
 	}
-	if (threadIdx.x == 0)
+	///if (threadIdx.x == 0)
 	printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
 }
 
