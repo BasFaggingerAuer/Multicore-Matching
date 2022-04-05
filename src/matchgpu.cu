@@ -996,13 +996,24 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			printf("Match round %d\n", i);
 			
 			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices, rand());
+			cudaDeviceSynchronize();
+			checkLastErrorCUDA(__FILE__, __LINE__);
 			printf("gSelect done\n");
+			
 			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices);
+			cudaDeviceSynchronize();
+			checkLastErrorCUDA(__FILE__, __LINE__);
 			printf("grRequest done\n");
+			
 			grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
+			cudaDeviceSynchronize();
+			checkLastErrorCUDA(__FILE__, __LINE__);
 			printf("grRespond done\n");
+
 			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
-														drequests, graph.nrVertices);														
+														drequests, graph.nrVertices);	
+			cudaDeviceSynchronize();
+			checkLastErrorCUDA(__FILE__, __LINE__);													
 			printf("gMatch done\n");
 
 	#ifdef MATCH_INTERMEDIATE_COUNT
