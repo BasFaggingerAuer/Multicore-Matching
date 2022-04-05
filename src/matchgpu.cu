@@ -989,9 +989,12 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			cerr << "Unable to clear matching on device!" << endl;
 			throw exception();
 		}
+		printf("lengthOfPath round %d\n", lengthOfPath);
 
 		for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
 		{
+			printf("Match round %d\n", i);
+			
 			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices, rand());
 			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices);
 			grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
