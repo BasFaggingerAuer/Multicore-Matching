@@ -426,7 +426,7 @@ __global__ void gMatch(int *match, const int *requests, const int nrVertices)
 	}
 }
 
-__global__ void gMatch(int *match, int *sense, int *fll, int *bll, const int *requests, const int nrVertices){
+__global__ void gMatch(int *match, int *fll, int *bll, const int *requests, const int nrVertices){
 
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -997,13 +997,8 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices, rand());
 			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices);
 			grRespond<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, graph.nrVertices);
-			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, 
-														dforwardlinkedlist, dbackwardlinkedlist, 
+			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
 														drequests, graph.nrVertices);														
-			gUpdateHeadTail<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, 
-														dforwardlinkedlist, dbackwardlinkedlist, 
-														drequests, graph.nrVertices);
-
 
 	#ifdef MATCH_INTERMEDIATE_COUNT
 			cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
