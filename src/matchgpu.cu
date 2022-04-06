@@ -725,10 +725,11 @@ __global__ void gUncoarsen(int *match, int *fll, int *bll, const int nrVertices)
 			match[curr] = i + 4;
 			int next = fll[curr];
 			while(curr != next){
+				match[next] = i + 4;
 				curr = next; 
 				next = fll[curr];
-				match[next] = i + 4;
 			}
+			match[curr] = i + 4;
 		}
 	}
 }
