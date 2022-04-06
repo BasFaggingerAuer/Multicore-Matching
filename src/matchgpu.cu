@@ -556,8 +556,6 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			uint head;
 			uint tail; 
 			if(isAsingleton){
-				head = i;
-				tail = i;
 				// With these assumptions, blue matched vertices can always set
 				// next to matched partner
 				if(match[i] == 0)
