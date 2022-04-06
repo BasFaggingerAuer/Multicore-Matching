@@ -311,12 +311,12 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
-	printf("vert %d, entered gSel\n", i);
+	//printf("vert %d, entered gSel\n", i);
 
 
 	if (i >= nrVertices || match[i] >= 2) return;
 
-	printf("vert %d, made it past first ret\n", i);
+	//printf("vert %d, made it past first ret\n", i);
 
 
 	// Is this vertex a head or a tail? Else decolor
@@ -330,7 +330,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	//Can this vertex still be matched?
 	if (match[i] >= 2) return;
 
-	printf("vert %d, made it to color stage\n", i);
+	//printf("vert %d, made it to color stage\n", i);
 
 	uint tail; 
 	uint head;
@@ -340,7 +340,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 		g = i;
 	} else {
 		if (isAHead){
-			printf("vert %d, isAHead\n", i);
+			//printf("vert %d, isAHead\n", i);
 
 			int curr = i;
 			int next = fll[curr];
@@ -351,12 +351,12 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(next != curr) {
 				curr = next;
 				next = fll[curr];
-				printf("curr %d, next %d, vert %d, looping head 2 tail\n", curr, next, i);
+				//printf("curr %d, next %d, vert %d, looping head 2 tail\n", curr, next, i);
 			}
 			head = i;
 			tail = curr;
 		} else if (isATail){
-			printf("vert %d, isATail\n", i);
+			//printf("vert %d, isATail\n", i);
 			int curr = i;
 			int prev = bll[curr];
 			// Find the end in the forward dir
@@ -366,12 +366,12 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(prev != curr) {
 				curr = prev;
 				prev = bll[curr];
-				printf("curr %d, prev %d, vert %d, looping tail 2 head\n", curr, prev, i);
+				//printf("curr %d, prev %d, vert %d, looping tail 2 head\n", curr, prev, i);
 			}
 			head = curr;
 			tail = i;
 		} else {
-			printf("ERROR: shouldn't ever reach here!\n");
+			//printf("ERROR: shouldn't ever reach here!\n");
 		}
 		// match heads and tails same match by using min as g.
 		// Hash color of set
@@ -452,7 +452,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 		sense[i] = (a + b) % 2;
 	}
 	///if (threadIdx.x == 0)
-	printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
+	//printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
 }
 
 __global__ void gaSelect(int *match, const int nrVertices, const uint random)
@@ -546,11 +546,13 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
 		// Only change fwd and bwd ll of my path to prevent race during LL reversal
 		if (requests[r] == i){
-
 			// Is this vertex a head or a tail? Else decolor
 			bool isATail = fll[i] == i;
 			bool isAHead = bll[i] == i;
 			bool isAsingleton = (isATail && isAHead);
+			printf("SUCCESS MATCHING %d (singleton %s) w %d\n", i, isAsingleton ? "True" : "False", r);
+			printf("SUCCESS MATCHING %d (head %s) w %d\n", i, isAHead ? "True" : "False", r);
+			printf("SUCCESS MATCHING %d (tail %s) w %d\n", i, isAsingleton ? "True" : "False", r);
 
 			uint tail; 
 			uint head;
