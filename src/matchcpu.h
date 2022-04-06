@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define NR_MATCH_ROUNDS 20
 #define NR_MAX_MATCH_ROUNDS 256
-#define MATCH_INTERMEDIATE_COUNT 1
-#define UNCOARSEN_GRAPH
+//#define MATCH_INTERMEDIATE_COUNT 1
+#define UNCOARSEN_GRAPH 1
 
 namespace mtc
 {
