@@ -324,9 +324,9 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	//printf("vert %d, entered gSel\n", i);
 	if (!singleton)
 	if (isAHead)
-	printf("%d (%s head %s)\n", i, match[i] ? "Red" : "Blue", isAHead ? "True" : "False");
+	printf("%d (%s head)\n", i, match[i] ? "Red" : "Blue");
 	else
-	printf("%d (%s tail %s)\n", i, match[i] ? "Red" : "Blue", isATail ? "True" : "False");
+	printf("%d (%s tail)\n", i, match[i] ? "Red" : "Blue");
 	
 
 
