@@ -674,15 +674,22 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			if(i == head){
 				bll[i] = r;
 				bool amIStillAHead = bll[i] == i;
+				bool amINowATail = fll[i] == i;
 				bool isMyTailStillATail = fll[tail] == tail;
 				printf("%d (%s head %s) after matching\n", i, match[i] ? "Red" : "Blue", amIStillAHead ? "True" : "False");
+				printf("%d (%s tail %s) after matching\n", i, match[i] ? "Red" : "Blue", amINowATail ? "True" : "False");
+
 				printf("%d's (%s tail %d) is still a tail(%s) w %d\n", i, match[i] ? "Red" : "Blue", head, isMyTailStillATail ? "True" : "False");
 			// With these assumptions, red matched vertices can always set
 			// prev to matched partner
 			} if(i == tail){
 				fll[i] = r;
 				bool amIStillATail = fll[i] == i;
+				bool amINowAHead = fll[i] == i;
+
 				bool isMyHeadStillAHead = bll[head] == head;
+				printf("%d (%s head %s) after matching\n", i, match[i] ? "Red" : "Blue", amINowAHead ? "True" : "False");
+
 				printf("%d (%s tail %s) after matching\n", i, match[i] ? "Red" : "Blue", amIStillATail ? "True" : "False");
 				printf("%d's (%s head %d) is still a head(%s) w %d\n", i, match[i] ? "Red" : "Blue", head, isMyHeadStillAHead ? "True" : "False");
 
