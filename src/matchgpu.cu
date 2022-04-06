@@ -634,7 +634,7 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 				}
 				head = i;
 				tail = curr;
-			} else if (isAHead && !isATail){
+			} else if (!isAHead && isATail){
 				printf("vert %d, isATail\n", i);
 				int curr = i;
 				int prev = bll[curr];
@@ -649,6 +649,8 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 				}
 				head = curr;
 				tail = i;
+			} else {
+				printf("ERROR matched an internal vertex!\n");
 			}
 			// With these assumptions, blue matched vertices can always set
 			// next to matched partner
