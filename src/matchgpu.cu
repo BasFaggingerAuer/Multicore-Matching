@@ -285,8 +285,8 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			// to reverse.
 			while(next != curr) {
 				curr = next;
-				next = fll[curr];
 				printf("curr %d, next %d, vert %d, looping head 2 tail\n", curr, next, i);
+				next = fll[curr];
 			}
 			head = i;
 			tail = curr;
@@ -300,8 +300,8 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			// to reverse.
 			while(prev != curr) {
 				curr = prev;
-				prev = bll[curr];
 				printf("curr %d, prev %d, vert %d, looping tail 2 head\n", curr, prev, i);
+				prev = bll[curr];
 			}
 			head = curr;
 			tail = i;
