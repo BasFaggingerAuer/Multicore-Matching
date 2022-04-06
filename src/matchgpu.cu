@@ -50,7 +50,7 @@ inline void checkLastErrorCUDA(const char *file, int line)
 #define SSTR( x ) static_cast< std::ostringstream & >( \
 	( std::ostringstream() << std::dec << x ) ).str()
 
-void writeGraphViz(std::vector<int> & match, 
+void writeGraphVizIntermediate(std::vector<int> & match, 
 					const Graph & g,
 					const string &fileName_arg,  
 					std::vector<int> & fll,
@@ -1115,7 +1115,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
 			cudaMemcpy(&fll[0], dforwardlinkedlist, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
 			cudaMemcpy(&bll[0], dbackwardlinkedlist, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
-			writeGraphViz(match, 
+			writeGraphVizIntermediate(match, 
 							graph,
 							"iter_"+SSTR(lengthOfPath)+"_"+SSTR(i),  
 							fll,
