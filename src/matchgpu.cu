@@ -558,6 +558,16 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			if(isAsingleton){
 				head = i;
 				tail = i;
+				// With these assumptions, blue matched vertices can always set
+				// next to matched partner
+				if(match[i] == 0)
+					fll[i] = r;
+				// With these assumptions, red matched vertices can always set
+				// prev to matched partner
+				if(match[i] == 1)
+					bll[i] = r;
+				match[i] = 4 + min(i, r);
+				return;
 			} else if(match[i] == 0 && isAHead && !isATail){
 			// The blue end always remains the head of the path, therefore:
 			// If a blue head matches, BT-BH<->R(H/T)-R(H/T)
