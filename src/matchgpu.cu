@@ -286,11 +286,12 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(next != curr) {
 				curr = next;
 				next = fll[curr];
-				printf("curr %d, next %d, head %d, tail %d, vert %d, looping head 2 tail\n", curr, next, head, tail, i);
+				printf("curr %d, next %d, vert %d, looping head 2 tail\n", curr, next, i);
 			}
 			head = i;
 			tail = curr;
 		} else if (isATail){
+			printf("vert %d, isATail\n", i);
 			int curr = i;
 			int prev = bll[curr];
 			// Find the end in the forward dir
@@ -300,10 +301,10 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(prev != curr) {
 				curr = prev;
 				prev = bll[curr];
-				printf("curr %d, next %d, head %d, tail %d, vert %d, looping tail 2 head\n", curr, prev, head, tail, i);
+				printf("curr %d, prev %d, vert %d, looping tail 2 head\n", curr, prev, i);
 			}
-			tail = i;
 			head = curr;
+			tail = i;
 		} else {
 			printf("ERROR: shouldn't ever reach here!\n");
 		}
