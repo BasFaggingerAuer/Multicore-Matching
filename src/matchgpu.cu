@@ -550,9 +550,9 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			bool isATail = fll[i] == i;
 			bool isAHead = bll[i] == i;
 			bool isAsingleton = (isATail && isAHead);
-			printf("SUCCESS MATCHING %d (singleton %s) w %d\n", i, isAsingleton ? "True" : "False", r);
-			printf("SUCCESS MATCHING %d (head %s) w %d\n", i, isAHead ? "True" : "False", r);
-			printf("SUCCESS MATCHING %d (tail %s) w %d\n", i, isAsingleton ? "True" : "False", r);
+			printf("SUCCESS MATCHING %d (%s singleton %s) w %d\n", i, match[i] ? "Red" : "Blue", isAsingleton ? "True" : "False", r);
+			printf("SUCCESS MATCHING %d (%s head %s) w %d\n", i, match[i] ? "Red" : "Blue", isAHead ? "True" : "False", r);
+			printf("SUCCESS MATCHING %d (%s tail %s) w %d\n", i, match[i] ? "Red" : "Blue", isAsingleton ? "True" : "False", r);
 
 			uint tail; 
 			uint head;
