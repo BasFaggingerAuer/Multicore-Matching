@@ -566,7 +566,7 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			if(match[i] == 0 && isAHead && !isATail){
 				printf("%d is a blue head, reverse ll\n", i);
 				int curr = head;
-				int next = fll[curr];
+				int next;
 				int prev;
 				// Find the end in the forward dir
 				// I know I'm not a singleton, so
@@ -575,12 +575,13 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 				do {
 					prev = bll[curr];
 					next = fll[curr];
+					printf("old next %d prev %d, vertex %d\n", next, prev, i);
 					bll[curr] = next;
 					fll[curr] = prev; 
 					curr = next;
-				} while(next != curr);
-				head = curr;
-				tail = i;
+				} while(fll[curr] != curr);
+				head = i;
+				tail = curr;
 			}
 			// The red end always remains the tail of the path, therefore:
 			// If a red tail matches, B(H/T)-B(H/T)<->RT-RH
@@ -588,21 +589,22 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			if(match[i] == 1 && isATail && !isAHead){
 				printf("%d is a red tail, reverse ll\n", i);
 				int curr = tail;
-				int next = bll[curr];
+				int next;
 				int prev;
 				// Find the end in the forward dir
 				// I know I'm not a singleton, so
 				// there must be at least one vertex
 				// to reverse.
 				do {
-					next = bll[curr];
-					prev = fll[curr];
+					prev = bll[curr];
+					next = fll[curr];
+					printf("old next %d prev %d, vertex %d\n", next, prev, i);
 					bll[curr] = next;
 					fll[curr] = prev; 
-					curr = next;
-				} while(next != curr);
-				head = i;
-				tail = curr;
+					curr = prev;
+				} while(bll[curr] != curr);
+				head = curr;
+				tail = i;
 			}
 			// With these assumptions, blue matched vertices can always set
 			// next to matched partner
