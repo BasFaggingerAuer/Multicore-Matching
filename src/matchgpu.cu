@@ -84,7 +84,7 @@ void writeGraphVizIntermediate(std::vector<int> & match,
 				}
 				std::string node2Name = SSTR(next);
 				nodeIt2 = nodeMap.find(node2Name);
-				if(nodeIt1 == nodeMap.end()){
+				if(nodeIt2 == nodeMap.end()){
 					nodeMap[node2Name] = graph->AddNode(node2Name);
 					nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[next]));
 					nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[next]));
