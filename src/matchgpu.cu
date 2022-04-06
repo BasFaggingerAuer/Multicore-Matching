@@ -563,7 +563,8 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			// The blue end always remains the head of the path, therefore:
 			// If a blue head matches, BT-BH<->R(H/T)-R(H/T)
 			// Reverse the blue LL to obtain : BH-BT<->R(H/T)-R(H/T)
-			if(match[i] == 0 && isAHead && !isAsingleton){
+			if(match[i] == 0 && isAHead && !isATail){
+				printf("%d is a blue head, reverse ll\n" i);
 				int curr = head;
 				int next = fll[curr];
 				int prev;
@@ -584,7 +585,8 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			// The red end always remains the tail of the path, therefore:
 			// If a red tail matches, B(H/T)-B(H/T)<->RT-RH
 			// Reverse the red LL to obtain : BH-BT<->RH-RT
-			if(match[i] == 1 && isATail && !isAsingleton){
+			if(match[i] == 1 && isATail && !isAHead){
+				printf("%d is a red tail, reverse ll\n" i);
 				int curr = tail;
 				int next = bll[curr];
 				int prev;
