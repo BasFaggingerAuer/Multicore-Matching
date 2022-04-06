@@ -283,7 +283,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(next != curr){
 				curr = next; 
 				next = fll[curr];
-				printf("vert %d, looping\n", i);
+				printf("curr %d, next %d, head %d, tail %d, vert %d, looping head 2 tail\n", curr, next, head, tail, i);
 
 			}
 			tail = curr;
@@ -296,8 +296,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(next != curr){
 				curr = next; 
 				next = bll[curr];
-				printf("vert %d, looping\n", i);
-
+				printf("curr %d, next %d, head %d, tail %d, vert %d, looping tail 2 head\n", curr, next, head, tail, i);
 			}
 			head = curr;
 		} else {
