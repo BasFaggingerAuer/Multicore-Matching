@@ -340,7 +340,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 		g = i;
 	} else {
 		if (isAHead){
-			//printf("vert %d, isAHead\n", i);
+			printf("vert %d, isAHead\n", i);
 
 			int curr = i;
 			int next = fll[curr];
@@ -351,12 +351,12 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(next != curr) {
 				curr = next;
 				next = fll[curr];
-				//printf("curr %d, next %d, vert %d, looping head 2 tail\n", curr, next, i);
+				printf("curr %d, next %d, vert %d, looping head 2 tail\n", curr, next, i);
 			}
 			head = i;
 			tail = curr;
 		} else if (isATail){
-			//printf("vert %d, isATail\n", i);
+			printf("vert %d, isATail\n", i);
 			int curr = i;
 			int prev = bll[curr];
 			// Find the end in the forward dir
@@ -366,7 +366,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(prev != curr) {
 				curr = prev;
 				prev = bll[curr];
-				//printf("curr %d, prev %d, vert %d, looping tail 2 head\n", curr, prev, i);
+				printf("curr %d, prev %d, vert %d, looping tail 2 head\n", curr, prev, i);
 			}
 			head = curr;
 			tail = i;
@@ -588,8 +588,8 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 				fll[curr] = prev; 
 				curr = next;
 				// Set myself to tail and curr to head
-				tail = i;
 				head = curr;
+				tail = i;
 			}
 			// The red end always remains the tail of the path, therefore:
 			// If a red tail matches, B(H/T)-B(H/T)<->RT-RH
