@@ -310,11 +310,8 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	//Determine blue and red groups using MD5 hashing.
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+	if (i >= nrVertices) return;
 
-	//printf("vert %d, entered gSel\n", i);
-
-
-	if (i >= nrVertices || match[i] >= 2) return;
 
 	//printf("vert %d, made it past first ret\n", i);
 
@@ -323,6 +320,16 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	bool isATail = fll[i] == i;
 	bool isAHead = bll[i] == i;
 	bool singleton = (isATail && isAHead);
+
+	//printf("vert %d, entered gSel\n", i);
+	if (isAsingleton)
+	printf("SUCCESS MATCHING %d (%s singleton %s)\n", i, match[i] ? "Red" : "Blue", isAsingleton ? "True" : "False");
+	else if (isAHead)
+	printf("%d (%s head %s)\n", i, match[i] ? "Red" : "Blue", isAHead ? "True" : "False");
+	else
+	printf("%d (%s tail %s)\n", i, match[i] ? "Red" : "Blue", isATail ? "True" : "False");
+	
+
 
 	// Dont color internal vertices
 	if ( !isATail && !isAHead ) match[i] = 2;
@@ -550,8 +557,11 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			bool isATail = fll[i] == i;
 			bool isAHead = bll[i] == i;
 			bool isAsingleton = (isATail && isAHead);
+			if (isAsingleton)
 			printf("SUCCESS MATCHING %d (%s singleton %s) w %d\n", i, match[i] ? "Red" : "Blue", isAsingleton ? "True" : "False", r);
+			else if (isAHead)
 			printf("SUCCESS MATCHING %d (%s head %s) w %d\n", i, match[i] ? "Red" : "Blue", isAHead ? "True" : "False", r);
+			else
 			printf("SUCCESS MATCHING %d (%s tail %s) w %d\n", i, match[i] ? "Red" : "Blue", isATail ? "True" : "False", r);
 			uint head;
 			uint tail; 
