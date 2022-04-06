@@ -43,6 +43,71 @@ inline void checkLastErrorCUDA(const char *file, int line)
   }
 }
 
+#include "../DotWriter/lib/DotWriter.h"
+#include "../DotWriter/lib/Enums.h"
+#include <sstream>
+
+#define SSTR( x ) static_cast< std::ostringstream & >( \
+	( std::ostringstream() << std::dec << x ) ).str()
+
+void writeGraphViz(std::vector<int> & match, 
+					const Graph & g,
+					const string &fileName_arg,  
+					std::vector<int> & fll,
+					std::vector<int> & bll)
+{
+	DotWriter::RootGraph gVizWriter(false, "graph");
+    std::string subgraph1 = "graph";
+    DotWriter::Subgraph * graph = gVizWriter.AddSubgraph(subgraph1);
+
+    std::map<std::string, DotWriter::Node *> nodeMap;    
+	int curr, next;
+	std::map<std::string, DotWriter::Node *>::const_iterator nodeIt1;
+	std::map<std::string, DotWriter::Node *>::const_iterator nodeIt2;
+
+    for (int i = 0; i < g.nrVertices; ++i){
+		// skip singletons
+		if (fll[i] == i && bll[i] == i)
+			continue;
+		// Start from heads only
+		if (bll[i] == i){
+			curr = i;
+			next = fll[curr];
+			while(curr != next){
+				std::string node1Name = SSTR(curr);
+				nodeIt1 = nodeMap.find(node1Name);
+				if(nodeIt1 == nodeMap.end()){
+					nodeMap[node1Name] = graph->AddNode(node1Name);
+					nodeMap[node1Name]->GetAttributes().SetColor(DotWriter::Color::e(match[curr]));
+					nodeMap[node1Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[curr]));
+					nodeMap[node1Name]->GetAttributes().SetStyle("filled");
+				}
+				std::string node2Name = SSTR(next);
+				nodeIt2 = nodeMap.find(node2Name);
+				if(nodeIt1 == nodeMap.end()){
+					nodeMap[node2Name] = graph->AddNode(node2Name);
+					nodeMap[node2Name]->GetAttributes().SetColor(DotWriter::Color::e(match[next]));
+					nodeMap[node2Name]->GetAttributes().SetFillColor(DotWriter::Color::e(match[next]));
+					nodeMap[node2Name]->GetAttributes().SetStyle("filled");
+				}
+				//graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name], SSTR(host_levels[i]));
+				nodeIt1 = nodeMap.find(node1Name);
+				nodeIt2 = nodeMap.find(node2Name);
+
+				if(nodeIt1 != nodeMap.end() && nodeIt2 != nodeMap.end()) 
+					graph->AddEdge(nodeMap[node1Name], nodeMap[node2Name]); 
+
+				curr = next; 
+				next = fll[curr];
+			}
+		}
+	}
+    gVizWriter.WriteToFile(fileName_arg);
+
+	std::cout << "Wrote graph viz " << fileName_arg << std::endl;
+
+}
+
 __constant__ uint dSelectBarrier = 0x8000000;
 
 GraphMatchingGPU::GraphMatchingGPU(const Graph &_graph, const int &_threadsPerBlock, const unsigned int &_selectBarrier) :
@@ -1048,7 +1113,13 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 
 	#ifdef MATCH_INTERMEDIATE_COUNT
 			cudaMemcpy(&match[0], dmatch, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
-			
+			cudaMemcpy(&fll[0], dforwardlinkedlist, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
+			cudaMemcpy(&bll[0], dbackwardlinkedlist, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
+			writeGraphViz(match, 
+							graph,
+							"iter_"+SSTR(lengthOfPath)+"_"+SSTR(i),  
+							fll,
+							bll);
 			double weight = 0;
 			long size = 0;
 
