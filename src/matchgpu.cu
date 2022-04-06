@@ -276,28 +276,33 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 	} else {
 		if (isAHead){
 			printf("vert %d, isAHead\n", i);
-			head = i;
+
 			int curr = i;
 			int next = fll[curr];
 			// Find the end in the forward dir
-			while(next != curr){
-				curr = next; 
+			// I know I'm not a singleton, so
+			// there must be at least one vertex
+			// to reverse.
+			while(next != curr) {
+				curr = next;
 				next = fll[curr];
 				printf("curr %d, next %d, head %d, tail %d, vert %d, looping head 2 tail\n", curr, next, head, tail, i);
-
 			}
+			head = i;
 			tail = curr;
 		} else if (isATail){
-			printf("vert %d, looping\n", i);
-			tail = i;
 			int curr = i;
-			int next = bll[curr];
-			// Find the end in the backward dir
-			while(next != curr){
-				curr = next; 
-				next = bll[curr];
+			int prev = bll[curr];
+			// Find the end in the forward dir
+			// I know I'm not a singleton, so
+			// there must be at least one vertex
+			// to reverse.
+			while(prev != curr) {
+				curr = prev;
+				prev = bll[curr];
 				printf("curr %d, next %d, head %d, tail %d, vert %d, looping tail 2 head\n", curr, next, head, tail, i);
 			}
+			tail = i;
 			head = curr;
 		} else {
 			printf("ERROR: shouldn't ever reach here!\n");
