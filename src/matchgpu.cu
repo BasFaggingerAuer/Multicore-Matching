@@ -580,8 +580,16 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 					fll[curr] = prev; 
 					curr = next;
 				} while(fll[curr] != curr);
-				head = i;
-				tail = curr;
+				// Reverse old tail to make it a head
+				prev = bll[curr];
+				next = fll[curr];
+				printf("old next %d prev %d, vertex %d\n", next, prev, i);
+				bll[curr] = next;
+				fll[curr] = prev; 
+				curr = next;
+				// Set myself to tail and curr to head
+				tail = i;
+				head = curr;
 			}
 			// The red end always remains the tail of the path, therefore:
 			// If a red tail matches, B(H/T)-B(H/T)<->RT-RH
@@ -595,6 +603,7 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 				// I know I'm not a singleton, so
 				// there must be at least one vertex
 				// to reverse.
+				// Reverse all internal nodes, doesnt reverse the old head
 				do {
 					prev = bll[curr];
 					next = fll[curr];
@@ -603,8 +612,15 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 					fll[curr] = prev; 
 					curr = prev;
 				} while(bll[curr] != curr);
-				head = curr;
-				tail = i;
+				// Reverse old head
+				prev = bll[curr];
+				next = fll[curr];
+				printf("old next %d prev %d, vertex %d\n", next, prev, i);
+				bll[curr] = next;
+				fll[curr] = prev; 
+				// Set myself to head and curr to tail
+				head = i;
+				tail = curr;
 			}
 			// With these assumptions, blue matched vertices can always set
 			// next to matched partner
