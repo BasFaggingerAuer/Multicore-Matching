@@ -300,7 +300,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			while(prev != curr) {
 				curr = prev;
 				prev = bll[curr];
-				printf("curr %d, next %d, head %d, tail %d, vert %d, looping tail 2 head\n", curr, next, head, tail, i);
+				printf("curr %d, next %d, head %d, tail %d, vert %d, looping tail 2 head\n", curr, prev, head, tail, i);
 			}
 			tail = i;
 			head = curr;
