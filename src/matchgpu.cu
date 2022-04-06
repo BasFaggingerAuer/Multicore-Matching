@@ -662,13 +662,13 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			}
 			// With these assumptions, blue matched vertices can always set
 			// next to matched partner
-			if(i == tail)
+			if(match[i] == 0)
 				fll[i] = r;
 			// With these assumptions, red matched vertices can always set
 			// prev to matched partner
-			if(i == head)
+			if(match[i] == 1)
 				bll[i] = r;
-			
+
 			match[head] = 4 + min(i, r);
 			match[tail] = 4 + min(i, r);
 		}
