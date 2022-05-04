@@ -912,6 +912,10 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 				// Set myself to tail and curr to head
 				head = curr;
 				tail = i;
+
+				heads[i] = head;
+				tails[i] = tail;
+
 			} else if(match[i] == 1 && isATail && !isAHead){
 			// The red end always remains the tail of the path, therefore:
 			// If a red tail matches, B(H/T)-B(H/T)<->RT-RH
@@ -942,6 +946,10 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 				// Set myself to head and curr to tail
 				head = i;
 				tail = curr;
+
+				heads[i] = head;
+				tails[i] = tail;
+
 			} else if (isAHead && !isATail){
 				printf("vert %d, isAHead\n", i);
 				head = i;
@@ -957,6 +965,7 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 			// next to matched partner
 			if(i == head){
 				bll[i] = r;
+
 				bool amIStillAHead = bll[i] == i;
 				bool amINowATail = fll[i] == i;
 				bool isMyTailStillATail = fll[tail] == tail;
@@ -968,6 +977,7 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 			// prev to matched partner
 			} if(i == tail){
 				fll[i] = r;
+
 				bool amIStillATail = fll[i] == i;
 				bool amINowAHead = fll[i] == i;
 
