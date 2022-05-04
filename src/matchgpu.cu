@@ -1122,13 +1122,14 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	cudaBindTexture(0, neighboursTexture, (void *)dneighbours, neighboursTextureDesc, sizeof(int)*graph.neighbours.size());
 
 	//Allocate necessary buffers on the device.
-	// dlinkedlists - to generalize matching to n edges
-	// dtails - to quickly flip sense of strand
-	// dmatch - same as singleton implementation
-	// dsense - indicates directionality of strand
+	// dforwardlinkedlist, dbackwardlinkedlist - to generalize matching to n edges.
+	// dlength - length of each path.
+	// dmatch - same as singleton implementation.
+	// dsense - indicates directionality of strand.
 	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense;
 
-	if (cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
+	if (cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		cudaMalloc(&dlength, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
 		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&dsense, sizeof(int)*graph.nrVertices) != cudaSuccess)
 	{
