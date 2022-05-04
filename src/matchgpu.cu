@@ -463,7 +463,7 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 }
 
 // Uses head/tail arrays
-__global__ void gSelect(int *match, int *sense, int * fll, int * bll, int * heads, int * tails, const int nrVertices, const uint random)
+__global__ void gSelect(int *match, int *sense, int * heads, int * tails, int * fll, int * bll, const int nrVertices, const uint random)
 {
 	//Determine blue and red groups using MD5 hashing.
 	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
