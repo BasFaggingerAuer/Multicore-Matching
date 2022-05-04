@@ -70,7 +70,7 @@ class GraphMatchingGPURandom : public GraphMatchingGPU
 
 };
 
-class GraphMatchingGeneralGPURandom : public GraphMatchingGeneralGPU
+class GraphMatchingGeneralGPURandom : public GraphMatchingGPU
 {
 	public:
 		GraphMatchingGeneralGPURandom(const Graph &, const int &, const unsigned int &);
