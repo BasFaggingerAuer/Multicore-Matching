@@ -521,7 +521,7 @@ int main(int argc, char **argv)
 					GraphMatching *matcher = getMatcher(graph2, *i, GPUNrThreadsPerBlock, barrier);
 					
 					match = matcher->initialMatching();
-					matcher->performMatching(match, t1, t2, fll, bll);
+					matcher->performMatching(match, t1, t2);
 
 					delete matcher;
 				}
