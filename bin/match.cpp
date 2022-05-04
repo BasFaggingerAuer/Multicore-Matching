@@ -462,7 +462,6 @@ int main(int argc, char **argv)
 
 	std::vector<int> fll(graph.nrVertices);
 	std::vector<int> bll(graph.nrVertices);
-	std::vector<int> lengthOfPath(graph.nrVertices);
 
 	//Perform all desired greedy matchings.
 	for (set<int>::const_iterator i = matchTypes.begin(); i != matchTypes.end(); ++i)
@@ -522,7 +521,7 @@ int main(int argc, char **argv)
 					GraphMatching *matcher = getMatcher(graph2, *i, GPUNrThreadsPerBlock, barrier);
 					
 					match = matcher->initialMatching();
-					matcher->performMatching(match, t1, t2, fll, bll, lengthOfPath);
+					matcher->performMatching(match, t1, t2, fll, bll);
 
 					delete matcher;
 				}

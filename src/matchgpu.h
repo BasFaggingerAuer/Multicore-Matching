@@ -36,7 +36,7 @@ class GraphMatchingGPU : public GraphMatching
 		GraphMatchingGPU(const Graph &, const int &, const unsigned int &);
 		virtual ~GraphMatchingGPU();
 		
-		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & fll, std::vector<int> & bll, std::vector<int> & lengthOfPath) const = 0;
+		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & fll, std::vector<int> & bll) const = 0;
 	protected:
 		const int threadsPerBlock;
 		const uint selectBarrier;
