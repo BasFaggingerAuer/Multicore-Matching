@@ -1159,7 +1159,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	cout << "0\t0\t0" << endl;
 #endif
 	int maxlength = 3;
-	for (int lengthOfPath = 0; lengthOfPath < maxlength; ++lengthOfPath){
+	for (int coarsenRounds = 0; coarsenRounds < maxlength; ++coarsenRounds){
 		// The inner loop methods generalize from singletons to linked lists of any length
 		// Therefore, all we need to do is reset the match repeat the inner loop.
 		// Each inner loop call adds at most one edge to a path.
@@ -1170,7 +1170,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			cerr << "Unable to clear matching on device!" << endl;
 			throw exception();
 		}
-		printf("lengthOfPath round %d\n", lengthOfPath);
+		printf("coarsenRounds round %d\n", coarsenRounds);
 
 		for (int i = 0; i < NR_MATCH_ROUNDS; ++i)
 		{
@@ -1204,7 +1204,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			cudaMemcpy(&bll[0], dbackwardlinkedlist, sizeof(int)*graph.nrVertices, cudaMemcpyDeviceToHost);
 			writeGraphVizIntermediate(match, 
 							graph,
-							"iter_"+SSTR(lengthOfPath)+"_"+SSTR(i),  
+							"iter_"+SSTR(coarsenRounds)+"_"+SSTR(i),  
 							fll,
 							bll);
 			double weight = 0;
