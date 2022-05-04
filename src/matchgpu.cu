@@ -833,6 +833,113 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 }
 
 
+__global__ void gReverseLL(int *match, int *heads, int *tails, int *fll, int *bll, const int *requests, const int nrVertices){
+
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+
+	const int r = requests[i];
+
+	// Only true if a B+ is neighbors with a R- 
+	// The pairing might have not occurred because of competition.
+	if (r < nrVertices)
+	{
+		// This vertex has made a valid request.
+		// Match the vertices if the request was mutual.
+		// R+ paired with a B-  -> R+.R- or B+.B-
+		// R+.R- paired with a B+.B-  -> R+.x.x.R- or B+.x.x.B-
+		// Only change fwd and bwd ll of my path to prevent race during LL reversal
+		if (requests[r] == i){
+			// Is this vertex a head or a tail? Else decolor
+			bool isATail = fll[i] == i;
+			bool isAHead = bll[i] == i;
+			bool isAsingleton = (isATail && isAHead);
+			uint head;
+			uint tail; 
+			if(isAsingleton){
+				return;
+			} else if(match[i] == 0 && isAHead && !isATail){
+			// The blue end always remains the head of the path, therefore:
+			// If a blue head matches, BT-BH<->R(H/T)-R(H/T)
+			// Reverse the blue LL to obtain : BH-BT<->R(H/T)-R(H/T)
+				printf("%d is a blue head, reverse ll\n", i);
+				int curr = i;
+				int next;
+				int prev;
+				// Find the end in the forward dir
+				// I know I'm not a singleton, so
+				// there must be at least one vertex
+				// to reverse.
+				do {
+					prev = bll[curr];
+					next = fll[curr];
+					printf("old next %d prev %d, vertex %d\n", next, prev, i);
+					bll[curr] = next;
+					fll[curr] = prev; 
+					curr = next;
+				} while(fll[curr] != curr);
+				// Reverse old tail to make it a head
+				prev = bll[curr];
+				next = fll[curr];
+				printf("old next %d prev %d, vertex %d\n", next, prev, i);
+				bll[curr] = next;
+				fll[curr] = prev; 
+				curr = next;
+				// Set myself to tail and curr to head
+				head = curr;
+				tail = i;
+
+				heads[head] = head;
+				heads[tail] = head;
+
+				tails[head] = tail;
+				tails[tail] = tail;
+
+			} else if(match[i] == 1 && isATail && !isAHead){
+			// The red end always remains the tail of the path, therefore:
+			// If a red tail matches, B(H/T)-B(H/T)<->RT-RH
+			// Reverse the red LL to obtain : BH-BT<->RH-RT
+				printf("%d is a red tail, reverse ll\n", i);
+				int curr = i;
+				int next;
+				int prev;
+				// Find the end in the forward dir
+				// I know I'm not a singleton, so
+				// there must be at least one vertex
+				// to reverse.
+				// Reverse all internal nodes, doesnt reverse the old head
+				do {
+					prev = bll[curr];
+					next = fll[curr];
+					printf("old next %d prev %d, vertex %d\n", next, prev, i);
+					bll[curr] = next;
+					fll[curr] = prev; 
+					curr = prev;
+				} while(bll[curr] != curr);
+				// Reverse old head
+				prev = bll[curr];
+				next = fll[curr];
+				printf("old next %d prev %d, vertex %d\n", next, prev, i);
+				bll[curr] = next;
+				fll[curr] = prev; 
+				// Set myself to head and curr to tail
+				head = i;
+				tail = curr;
+				
+				heads[head] = head;
+				heads[tail] = head;
+
+				tails[head] = tail;
+				tails[tail] = tail;
+
+			}
+		}
+	}
+}
+
+
+
 __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, const int *requests, const int nrVertices){
 
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -874,97 +981,21 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 			if(isAsingleton){
 				// With these assumptions, blue matched vertices can always set
 				// next to matched partner
-				if(match[i] == 0)
+				if(match[i] == 0){
 					fll[i] = r;
+					tails[i] = tails[r];
+				}
 				// With these assumptions, red matched vertices can always set
 				// prev to matched partner
-				if(match[i] == 1)
+				if(match[i] == 1){
 					bll[i] = r;
+					heads[i] = heads[r];
+				}
 				match[i] = 4 + min(i, r);
 				return;
-			} else if(match[i] == 0 && isAHead && !isATail){
-			// The blue end always remains the head of the path, therefore:
-			// If a blue head matches, BT-BH<->R(H/T)-R(H/T)
-			// Reverse the blue LL to obtain : BH-BT<->R(H/T)-R(H/T)
-				printf("%d is a blue head, reverse ll\n", i);
-				int curr = i;
-				int next;
-				int prev;
-				// Find the end in the forward dir
-				// I know I'm not a singleton, so
-				// there must be at least one vertex
-				// to reverse.
-				do {
-					prev = bll[curr];
-					next = fll[curr];
-					printf("old next %d prev %d, vertex %d\n", next, prev, i);
-					bll[curr] = next;
-					fll[curr] = prev; 
-					curr = next;
-				} while(fll[curr] != curr);
-				// Reverse old tail to make it a head
-				prev = bll[curr];
-				next = fll[curr];
-				printf("old next %d prev %d, vertex %d\n", next, prev, i);
-				bll[curr] = next;
-				fll[curr] = prev; 
-				curr = next;
-				// Set myself to tail and curr to head
-				head = curr;
-				tail = i;
-
-				heads[i] = head;
-				tails[i] = tail;
-
-			} else if(match[i] == 1 && isATail && !isAHead){
-			// The red end always remains the tail of the path, therefore:
-			// If a red tail matches, B(H/T)-B(H/T)<->RT-RH
-			// Reverse the red LL to obtain : BH-BT<->RH-RT
-				printf("%d is a red tail, reverse ll\n", i);
-				int curr = i;
-				int next;
-				int prev;
-				// Find the end in the forward dir
-				// I know I'm not a singleton, so
-				// there must be at least one vertex
-				// to reverse.
-				// Reverse all internal nodes, doesnt reverse the old head
-				do {
-					prev = bll[curr];
-					next = fll[curr];
-					printf("old next %d prev %d, vertex %d\n", next, prev, i);
-					bll[curr] = next;
-					fll[curr] = prev; 
-					curr = prev;
-				} while(bll[curr] != curr);
-				// Reverse old head
-				prev = bll[curr];
-				next = fll[curr];
-				printf("old next %d prev %d, vertex %d\n", next, prev, i);
-				bll[curr] = next;
-				fll[curr] = prev; 
-				// Set myself to head and curr to tail
-				head = i;
-				tail = curr;
-
-				heads[i] = head;
-				tails[i] = tail;
-
-			} else if (isAHead && !isATail){
-				printf("vert %d, isAHead\n", i);
-				head = i;
-				tail = tails[i];
-			} else if (!isAHead && isATail){
-				printf("vert %d, isATail\n", i);
-				head = heads[i];
-				tail = i;
-			} else {
-				printf("ERROR matched an internal vertex!\n");
-			}
-			// With these assumptions, blue matched vertices can always set
-			// next to matched partner
-			if(i == head){
+			} else if(isAHead){
 				bll[i] = r;
+				heads[i] = heads[r];
 
 				bool amIStillAHead = bll[i] == i;
 				bool amINowATail = fll[i] == i;
@@ -975,8 +1006,9 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 				printf("%d's (%s tail %d) is still a tail(%s) w %d\n", i, match[i] ? "Red" : "Blue", tail, isMyTailStillATail ? "True" : "False");
 			// With these assumptions, red matched vertices can always set
 			// prev to matched partner
-			} if(i == tail){
+			} else {
 				fll[i] = r;
+				tails[i] = tails[r];
 
 				bool amIStillATail = fll[i] == i;
 				bool amINowAHead = fll[i] == i;
@@ -986,9 +1018,11 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 
 				printf("%d (%s tail %s) after matching\n", i, match[i] ? "Red" : "Blue", amIStillATail ? "True" : "False");
 				printf("%d's (%s head %d) is still a head(%s) w %d\n", i, match[i] ? "Red" : "Blue", head, isMyHeadStillAHead ? "True" : "False");
-
-
 			}
+			// Double writes from both matched vertices
+			// Heads and tails are updated to reflect full LL.
+			head = heads[i];
+			tail = tails[i];
 			match[head] = 4 + min(i, r);
 			match[tail] = 4 + min(i, r);
 		}
