@@ -305,6 +305,7 @@ __global__ void gSelect(int *match, const int nrVertices, const uint random)
 	match[i] = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
 }
 
+// Finds head/tail by iterating through the list
 __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int nrVertices, const uint random)
 {
 	//Determine blue and red groups using MD5 hashing.
@@ -378,6 +379,136 @@ __global__ void gSelect(int *match, int *sense, int * fll, int * bll, const int 
 			tail = i;
 		} else {
 			//printf("ERROR: shouldn't ever reach here!\n");
+		}
+		// match heads and tails same match by using min as g.
+		// Hash color of set
+		g = min(tail, head);
+	}
+	//Start hashing.
+	uint h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476;
+	uint a = h0, b = h1, c = h2, d = h3, e, f;
+
+	for (int j = 0; j < 16; ++j)
+	{
+		f = (b & c) | ((~b) & d);
+
+		e = d;
+		d = c;
+		c = b;
+		b += LEFTROTATE(a + f + dMD5K[j] + g, dMD5R[j]);
+		a = e;
+
+		h0 += a;
+		h1 += b;
+		h2 += c;
+		h3 += d;
+
+		g *= random;
+	}
+	
+	uint color = ((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
+	match[i] = color;
+	// Singletons are made the right sense for their color to promote matching.
+	// Red(-) and Blue(+)
+	if (singleton){
+		sense[i] = color;
+	}
+	else
+	{
+		// Currently sense is rehashed every iteration
+		// Hash sense
+		uint g = max(tail, head);
+		bool mask = (g == i);
+
+		for (int j = 0; j < 16; ++j)
+		{
+			f = (b & c) | ((~b) & d);
+
+			e = d;
+			d = c;
+			c = b;
+			b += LEFTROTATE(a + f + dMD5K[j] + g, dMD5R[j]);
+			a = e;
+
+			h0 += a;
+			h1 += b;
+			h2 += c;
+			h3 += d;
+
+			g *= random;
+		}
+		// Notice how in each case i and j have opposite senses.
+		// Truth Table to Check //
+		//                   
+		//     a    b    a^b
+		//C1
+		//i // 0    0    0   
+		//j // 0    1    1 
+		//C3
+		//i // 0    1    1   
+		//j // 0    0    0  
+		//C3
+		//i // 1    0    1   
+		//j // 1    1    0 
+		//C4
+		//i // 1    1    0   
+		//j // 1    0    1  
+		bool a = (bool)((h0 + h1 + h2 + h3) < dSelectBarrier ? 0 : 1);
+		bool b = mask;
+		//bool XOR(bool a, bool b)
+		sense[i] = (a + b) % 2;
+	}
+	///if (threadIdx.x == 0)
+	//printf("vert %d, color %d, sense %d\n", i, color, sense[i]);
+}
+
+// Uses head/tail arrays
+__global__ void gSelect(int *match, int *sense, int * fll, int * bll, int * heads, int * tails, const int nrVertices, const uint random)
+{
+	//Determine blue and red groups using MD5 hashing.
+	//Based on the Wikipedia MD5 hashing pseudocode (http://en.wikipedia.org/wiki/MD5).
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+	if (i >= nrVertices) return;
+
+	//printf("vert %d, made it past first ret\n", i);
+
+	// Is this vertex a head or a tail? Else decolor
+	bool isATail = fll[i] == i;
+	bool isAHead = bll[i] == i;
+	bool singleton = (isATail && isAHead);
+
+	//printf("vert %d, entered gSel\n", i);
+	if (!singleton)
+		if (isAHead)
+			printf("%d (%s head)\n", i, match[i] ? "Red" : "Blue");
+		else
+			printf("%d (%s tail)\n", i, match[i] ? "Red" : "Blue");
+
+	// Dont color internal vertices
+	if ( !isATail && !isAHead ) match[i] = 2;
+
+	//Can this vertex still be matched?
+	if (match[i] >= 2) return;
+
+	//printf("vert %d, made it to color stage\n", i);
+
+	uint tail; 
+	uint head;
+	uint g;
+	// This approach prevents needing a datastructure of size 2N, to hold heads/tails
+	if (singleton){
+		g = i;
+	} else {
+		if (isAHead){
+			printf("vert %d, isAHead\n", i);
+			head = i;
+			tail = tails[i];
+		} else if (isATail){
+			printf("vert %d, isATail\n", i);
+			head = heads[i];
+			tail = i;
+		} else {
+			printf("ERROR: shouldn't ever reach here!\n");
 		}
 		// match heads and tails same match by using min as g.
 		// Hash color of set
@@ -1126,7 +1257,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	// dtails - to quickly flip sense of strand
 	// dmatch - same as singleton implementation
 	// dsense - indicates directionality of strand
-	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense, *dlop;
+	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense, *dlop, *dh, *dt;
 
 	if (cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
 		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
@@ -1144,10 +1275,21 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::sequence(dbll.begin(),dbll.end());
 	dbackwardlinkedlist = thrust::raw_pointer_cast(&dbll[0]);
 
-	thrust::device_vector<int>dlengthOfPath(graph.nrVertices);
-	thrust::fill(dlengthOfPath.begin(),dlengthOfPath.end(), 1);
-	dlop = thrust::raw_pointer_cast(&dlengthOfPath[0]);
+	bool useMoreMemory = true;
+	
+	if (useMoreMemory){
+		thrust::device_vector<int>dlengthOfPath(graph.nrVertices);
+		thrust::fill(dlengthOfPath.begin(),dlengthOfPath.end(), 1);
+		dlop = thrust::raw_pointer_cast(&dlengthOfPath[0]);
 
+		thrust::device_vector<int>dheads(graph.nrVertices);
+		thrust::sequence(dheads.begin(),dheads.end());
+		dh = thrust::raw_pointer_cast(&dheads[0]);
+
+		thrust::device_vector<int>dtails(graph.nrVertices);
+		thrust::sequence(dtails.begin(),dtails.end());
+		dt = thrust::raw_pointer_cast(&dtails[0]);
+	}
 	//Perform matching.
 	int blocksPerGrid = (graph.nrVertices + threadsPerBlock - 1)/threadsPerBlock;
 	
@@ -1181,7 +1323,11 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			cudaDeviceSynchronize();
 			checkLastErrorCUDA(__FILE__, __LINE__);
 			printf("Match round %d\n", i);
-			gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices, rand());
+			if (useMoreMemory)
+				gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dh, dt, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices, rand());
+			}else{
+				gSelect<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices, rand());
+			}
 			cudaDeviceSynchronize();
 			checkLastErrorCUDA(__FILE__, __LINE__);
 			printf("gSelect done\n");
