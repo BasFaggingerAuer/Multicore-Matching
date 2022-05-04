@@ -42,7 +42,7 @@ class GraphMatching
 		static inline bool isMatched(const int &m) {return m >= 4;};
 	
 		std::vector<int> initialMatching() const;
-		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & fll, std::vector<int> & bll) const = 0;
+		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & fll, std::vector<int> & bll, std::vector<int> & lengthOfPath) const = 0;
 
 	protected:
 		const Graph &graph;

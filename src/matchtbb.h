@@ -31,7 +31,7 @@ class GraphMatchingTBB : public GraphMatching
 		GraphMatchingTBB(const Graph &, const unsigned int &);
 		~GraphMatchingTBB();
 		
-		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & fll, std::vector<int> & bll) const = 0;
+		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & fll, std::vector<int> & bll, std::vector<int> & lengthOfPath) const = 0;
 		
 	protected:
 		const uint selectBarrier;
