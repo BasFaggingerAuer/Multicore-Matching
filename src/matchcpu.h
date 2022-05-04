@@ -48,25 +48,6 @@ class GraphMatching
 		const Graph &graph;
 };
 
-class GraphMatchingGeneral
-{
-	public:
-		GraphMatchingGeneral(const Graph &);
-		virtual ~GraphMatchingGeneral();
-
-		static void getWeight(double &, long &, const std::vector<int> &, const Graph &);
-		static bool testMatching(const std::vector<int> &, const Graph &);
-		
-		static inline int matchVal(const int &i, const int &j) {return 4 + (i < j ? i : j);};
-		static inline bool isMatched(const int &m) {return m >= 4;};
-	
-		std::vector<int> initialMatching() const;
-		virtual void performMatching(std::vector<int> &, cudaEvent_t &, cudaEvent_t &, std::vector<int> & fll, std::vector<int> & bll) const = 0;
-
-	protected:
-		const Graph &graph;
-};
-
 class GraphMatchingCPURandom : public GraphMatching
 {
 	public:
