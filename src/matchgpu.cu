@@ -926,7 +926,7 @@ __global__ void gReverseLL(int *match, int *heads, int *tails, int *fll, int *bl
 				// Set myself to head and curr to tail
 				head = i;
 				tail = curr;
-				
+
 				heads[head] = head;
 				heads[tail] = head;
 
@@ -1542,6 +1542,8 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 				gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dh, dt, dforwardlinkedlist, dbackwardlinkedlist, 
 					drequests, graph.nrVertices);
 			}else{
+				gReverseLL<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
+					drequests, graph.nrVertices);	
 				gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
 															drequests, graph.nrVertices);	
 			}
