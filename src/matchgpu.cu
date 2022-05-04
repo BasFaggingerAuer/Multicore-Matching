@@ -1539,11 +1539,11 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			checkLastErrorCUDA(__FILE__, __LINE__);
 			printf("grRespond done\n");
 			if (useMoreMemory){
+				gReverseLL<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dh, dt, dforwardlinkedlist, dbackwardlinkedlist, 
+					drequests, graph.nrVertices);
 				gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dh, dt, dforwardlinkedlist, dbackwardlinkedlist, 
 					drequests, graph.nrVertices);
 			}else{
-				gReverseLL<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
-					drequests, graph.nrVertices);	
 				gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
 															drequests, graph.nrVertices);	
 			}
