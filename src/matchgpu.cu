@@ -1129,6 +1129,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense;
 
 	if (cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess || 
+		cudaMalloc(&dlength, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
 		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
 		cudaMalloc(&dsense, sizeof(int)*graph.nrVertices) != cudaSuccess)
 	{
