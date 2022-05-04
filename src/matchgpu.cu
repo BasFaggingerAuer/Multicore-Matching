@@ -833,7 +833,7 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 }
 
 
-__global__ void gMatch(int *match, int *dh, int *dt, int *fll, int *bll, const int *requests, const int nrVertices){
+__global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, const int *requests, const int nrVertices){
 
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -944,34 +944,11 @@ __global__ void gMatch(int *match, int *dh, int *dt, int *fll, int *bll, const i
 				tail = curr;
 			} else if (isAHead && !isATail){
 				printf("vert %d, isAHead\n", i);
-	
-				int curr = i;
-				int next = fll[curr];
-				// Find the end in the forward dir
-				// I know I'm not a singleton, so
-				// there must be at least one vertex
-				// to reverse.
-				while(next != curr) {
-					curr = next;
-					next = fll[curr];
-					printf("curr %d, next %d, vert %d, looping head 2 tail\n", curr, next, i);
-				}
 				head = i;
-				tail = curr;
+				tail = tails[i];
 			} else if (!isAHead && isATail){
 				printf("vert %d, isATail\n", i);
-				int curr = i;
-				int prev = bll[curr];
-				// Find the end in the forward dir
-				// I know I'm not a singleton, so
-				// there must be at least one vertex
-				// to reverse.
-				while(prev != curr) {
-					curr = prev;
-					prev = bll[curr];
-					printf("curr %d, prev %d, vert %d, looping tail 2 head\n", curr, prev, i);
-				}
-				head = curr;
+				head = heads[i];
 				tail = i;
 			} else {
 				printf("ERROR matched an internal vertex!\n");
