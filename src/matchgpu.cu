@@ -1517,7 +1517,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			cudaDeviceSynchronize();
 			checkLastErrorCUDA(__FILE__, __LINE__);
 			printf("grRespond done\n");
-			if (useMoreMemory)
+			if (useMoreMemory){
 				gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dh, dt, dforwardlinkedlist, dbackwardlinkedlist, 
 					drequests, graph.nrVertices);
 			}else{
