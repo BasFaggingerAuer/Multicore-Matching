@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // For generalized MM heads & tails
 #include<thrust/device_vector.h>
 #include<thrust/sequence.h>
-
+#include <thrust/fill.h>
 namespace mtc
 {
 

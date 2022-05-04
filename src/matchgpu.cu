@@ -1126,7 +1126,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	// dtails - to quickly flip sense of strand
 	// dmatch - same as singleton implementation
 	// dsense - indicates directionality of strand
-	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense;
+	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense, *dlop;
 
 	if (cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
 		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
@@ -1143,6 +1143,10 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::device_vector<int>dbll(graph.nrVertices);
 	thrust::sequence(dbll.begin(),dbll.end());
 	dbackwardlinkedlist = thrust::raw_pointer_cast(&dbll[0]);
+
+	thrust::device_vector<int>dlengthOfPath(graph.nrVertices);
+	thrust::fill(dlengthOfPath.begin(),dlengthOfPath.end(), 1);
+	dlop = thrust::raw_pointer_cast(&dlengthOfPath[0]);
 
 	//Perform matching.
 	int blocksPerGrid = (graph.nrVertices + threadsPerBlock - 1)/threadsPerBlock;
