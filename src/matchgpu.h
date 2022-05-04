@@ -51,7 +51,7 @@ class GraphMatchingGeneralGPU : public GraphMatchingGeneral
 		virtual ~GraphMatchingGPU();
 
 		virtual void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2, vector<int> & fll, vector<int> & bll, vector<int> & lengthOfPath) const = 0;
-		virtual void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const {}
+		void performMatching(vector<int> &match, cudaEvent_t &t1, cudaEvent_t &t2) const {}
 
 	protected:
 		const int threadsPerBlock;
