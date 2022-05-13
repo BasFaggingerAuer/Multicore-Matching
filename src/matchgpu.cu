@@ -792,7 +792,8 @@ __global__ void gLength(int *match, int *requests, int *fll, int *bll, int *leng
 
 	const int r = requests[i];
 	// I'm a recently matched head, so I'll update length variable in head and tail
-	if (r < nrVertices && 4 <= match[i] && bll[i] == i){
+	//if (r < nrVertices && 4 <= match[i] && bll[i] == i){
+	if (bll[i] == i){
 		printf("vert %d, isAHead\n", i);
 		int head, tail, pl;
 		int curr = i;
