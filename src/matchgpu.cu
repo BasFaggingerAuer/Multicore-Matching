@@ -784,7 +784,7 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 }
 
 
-__global__ void gLength(int *match, int *fll, int *bll, const int *length, const int nrVertices){
+__global__ void gLength(int *match, int *requests, int *fll, int *bll, const int *length, const int nrVertices){
 
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -1706,7 +1706,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
 														drequests, graph.nrVertices);
 			if (useMaxLength)
-				gLength<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
+				gLength<<<blocksPerGrid, threadsPerBlock>>>(dmatch, drequests, dforwardlinkedlist, dbackwardlinkedlist, 
 															dlength, drequests, graph.nrVertices);
 			//}
 			cudaDeviceSynchronize();
