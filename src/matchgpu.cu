@@ -1253,6 +1253,71 @@ __global__ void grRequest(int *requests, const int *match, const int *sense, con
 	}
 }
 
+
+//==== Random greedy matching kernels ====
+__global__ void grRequest(int *requests, const int *match, const int *sense, const int *length, const int *forwardlinkedlist, const int *backwardlinkedlist, const int nrVertices)
+{
+	//Let all blue (+) vertices make requests.
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+	
+	const int2 indices = tex1Dfetch(neighbourRangesTexture, i);
+
+	//Look at all blue (+) vertices and let them make requests.
+	if (match[i] == 0 && sense[i] == 0)
+	{
+		int noUnmatchedNeighborExists = 1;
+		// One of these must be myself and the other might be myself (singleton)
+		// Since I allow quick sense flipping, it is unclear whether head->me or tail->me
+		// All that is known is I am either head or tail and at most one one my neighbors
+		// can be in my matching.  Therefore, just check each neighbor against both directions.
+		const int nf = forwardlinkedlist[i];
+		const int nb = backwardlinkedlist[i];		
+		for (int j = indices.x; j < indices.y; ++j)
+		{
+			const int ni = tex1Dfetch(neighboursTexture, j);
+			// Prevents matching an already matched neighbor
+			// We would never successfully rematch
+			// but the "noUnmatchedNeighborExists" 
+			// flag will never be set for pairs
+			// without this continue statement.
+			// r+.-r-, b+.b-; there is a colored neighbor.
+			if (nf == ni || nb == ni) continue;
+			const int nm = match[ni];
+			//Do we have an unmatched neighbour?
+			// 0 : Blue; 1 : Red, 2 
+			// Blue or Red
+			if (nm < 4 && ((length[ni]+length[i]) <= 3))
+			{
+				// Negative sense 
+				if (sense[ni] == 1){
+					//Is this neighbour red?
+					if (nm == 1)
+					{
+						//Propose to this red(-) neighbour.
+						requests[i] = ni;
+						//printf("I %d requested %d\n", i, ni);
+						return;
+					}
+				}
+				// Neighbor is : [red(+) or blue(-)]
+				noUnmatchedNeighborExists = 0;
+			}
+		}
+		// N   -> Neighbors : [red(+), blue(-)] -> recolor
+		// N+1 -> No unmatched neighbors -> decolor
+		requests[i] = nrVertices + noUnmatchedNeighborExists;
+	}
+	else
+	{
+		// If I'm red or blue (-)
+		//Clear request value.
+		requests[i] = nrVertices;
+	}
+}
+
+
 __global__ void grRespond(int *requests, const int *match, const int nrVertices)
 {
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -1558,6 +1623,8 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::device_vector<int>dlengthOfPath(graph.nrVertices);
 	thrust::fill(dlengthOfPath.begin(),dlengthOfPath.end(), 1);
 	dlength = thrust::raw_pointer_cast(&dlengthOfPath[0]);
+
+	bool useMaxLength = true;
 	/*
 	bool useMoreMemory = true;
 
@@ -1614,8 +1681,10 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			cudaDeviceSynchronize();
 			checkLastErrorCUDA(__FILE__, __LINE__);
 			printf("gSelect done\n");
-			
-			grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices);
+			if (useMaxLength)
+				grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dlength, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices);
+			else 
+				grRequest<<<blocksPerGrid, threadsPerBlock>>>(drequests, dmatch, dsense, dforwardlinkedlist, dbackwardlinkedlist, graph.nrVertices);
 			cudaDeviceSynchronize();
 			checkLastErrorCUDA(__FILE__, __LINE__);
 			printf("grRequest done\n");
