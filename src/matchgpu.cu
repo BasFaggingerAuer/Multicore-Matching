@@ -698,12 +698,13 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 			if(isAsingleton){
 				// With these assumptions, blue matched vertices can always set
 				// next to matched partner
-				if(match[i] == 0)
+				if(match[i] == 0){
 					fll[i] = r;
 				// With these assumptions, red matched vertices can always set
 				// prev to matched partner
-				if(match[i] == 1)
+				} else if(match[i] == 1){
 					bll[i] = r;
+				}
 				match[i] = 4 + min(i, r);
 				return;
 			} else if(match[i] == 0 && isAHead && !isATail){
@@ -783,6 +784,35 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 }
 
 
+__global__ void gLength(int *match, int *fll, int *bll, const int *length, const int nrVertices){
+
+	const int i = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (i >= nrVertices) return;
+
+	const int r = requests[i];
+	// I'm a recently matched head, so I'll update length variable in head and tail
+	if (r < nrVertices && 4 <= match[i] && bll[i] == i){
+		printf("vert %d, isAHead\n", i);
+		int head, tail, pl;
+		int curr = i;
+		int next = fll[curr];
+		pl = 0;
+		// Find the end in the forward dir
+		// I know I'm not a singleton, so
+		// there must be at least one vertex
+		// to reverse.
+		while(next != curr) {
+			pl += 1;
+			curr = next;
+			next = fll[curr];
+		}
+		head = i;
+		tail = curr;
+		length[head] = pl;
+		length[tail] = pl;
+	}
+}
 
 __global__ void gReverseLL(int *match, int *heads, int *tails, int *fll, int *bll, const int *requests, const int nrVertices){
 
@@ -996,7 +1026,7 @@ __global__ void gReverseLL(int *match, int *fll, int *bll, const int *requests, 
 }
 
 
-
+/*
 __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, const int *requests, const int nrVertices){
 
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -1080,6 +1110,7 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 		}
 	}
 }
+*/
 
 /**
 Precondition: Graph is composed of colored heads and tails with 
@@ -1506,7 +1537,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	// dtails - to quickly flip sense of strand
 	// dmatch - same as singleton implementation
 	// dsense - indicates directionality of strand
-	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense, *dlop, *dh, *dt;
+	int *dforwardlinkedlist, *dbackwardlinkedlist, *dmatch, *drequests, *dsense, *dlength, *dh, *dt;
 
 	if (cudaMalloc(&drequests, sizeof(int)*graph.nrVertices) != cudaSuccess ||  
 		cudaMalloc(&dmatch, sizeof(int)*graph.nrVertices) != cudaSuccess || 
@@ -1523,13 +1554,15 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::device_vector<int>dbll(graph.nrVertices);
 	thrust::sequence(dbll.begin(),dbll.end());
 	dbackwardlinkedlist = thrust::raw_pointer_cast(&dbll[0]);
+
+	thrust::device_vector<int>dlengthOfPath(graph.nrVertices);
+	thrust::fill(dlengthOfPath.begin(),dlengthOfPath.end(), 1);
+	dlength = thrust::raw_pointer_cast(&dlengthOfPath[0]);
 	/*
 	bool useMoreMemory = true;
 
 	if (useMoreMemory){
-		thrust::device_vector<int>dlengthOfPath(graph.nrVertices);
-		thrust::fill(dlengthOfPath.begin(),dlengthOfPath.end(), 1);
-		dlop = thrust::raw_pointer_cast(&dlengthOfPath[0]);
+
 
 		thrust::device_vector<int>dheads(graph.nrVertices);
 		thrust::sequence(dheads.begin(),dheads.end());
@@ -1602,7 +1635,9 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			gReverseLL<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
 														drequests, graph.nrVertices);
 			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
-														drequests, graph.nrVertices);	
+														drequests, graph.nrVertices);
+			gLength<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
+														dlength, drequests, graph.nrVertices);
 			//}
 			cudaDeviceSynchronize();
 			checkLastErrorCUDA(__FILE__, __LINE__);													
