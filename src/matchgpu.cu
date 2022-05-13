@@ -1622,7 +1622,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	dbackwardlinkedlist = thrust::raw_pointer_cast(&dbll[0]);
 
 	thrust::device_vector<int>dlengthOfPath(graph.nrVertices);
-	thrust::fill(dlengthOfPath.begin(),dlengthOfPath.end(), 1);
+	thrust::fill(dlengthOfPath.begin(),dlengthOfPath.end(), 0);
 	dlength = thrust::raw_pointer_cast(&dlengthOfPath[0]);
 
 	bool useMaxLength = true;
