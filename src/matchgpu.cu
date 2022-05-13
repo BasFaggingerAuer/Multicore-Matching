@@ -1048,8 +1048,7 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 					bll[i] = r;
 					heads[i] = heads[r];
 				}
-				match[i] = 4 + min(i, r);
-				return;
+				match[i] = 4 + min(heads[i], tails[i]);
 			} else if(isAHead){
 				bll[i] = r;
 				heads[i] = heads[r];
@@ -1061,6 +1060,7 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 				printf("%d (%s tail %s) after matching\n", i, match[i] ? "Red" : "Blue", amINowATail ? "True" : "False");
 
 				printf("%d's (%s tail %d) is still a tail(%s) w %d\n", i, match[i] ? "Red" : "Blue", tail, isMyTailStillATail ? "True" : "False");
+				match[tails[i]] = 4 + min(heads[i], tails[i]);
 			// With these assumptions, red matched vertices can always set
 			// prev to matched partner
 			} else {
@@ -1075,13 +1075,8 @@ __global__ void gMatch(int *match, int *heads, int *tails, int *fll, int *bll, c
 
 				printf("%d (%s tail %s) after matching\n", i, match[i] ? "Red" : "Blue", amIStillATail ? "True" : "False");
 				printf("%d's (%s head %d) is still a head(%s) w %d\n", i, match[i] ? "Red" : "Blue", head, isMyHeadStillAHead ? "True" : "False");
+				match[heads[i]] = 4 + min(heads[i], tails[i]);
 			}
-			// Double writes from both matched vertices
-			// Heads and tails are updated to reflect full LL.
-			head = heads[i];
-			tail = tails[i];
-			match[head] = 4 + min(i, r);
-			match[tail] = 4 + min(i, r);
 		}
 	}
 }
@@ -1603,7 +1598,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 			}else{
 				gReverseLL<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
 															drequests, graph.nrVertices);
-				gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
+				gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dh, dt, dforwardlinkedlist, dbackwardlinkedlist, 
 															drequests, graph.nrVertices);	
 			}
 			cudaDeviceSynchronize();
