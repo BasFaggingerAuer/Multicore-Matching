@@ -1524,7 +1524,7 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 	thrust::sequence(dbll.begin(),dbll.end());
 	dbackwardlinkedlist = thrust::raw_pointer_cast(&dbll[0]);
 
-	bool useMoreMemory = false;
+	bool useMoreMemory = true;
 
 	if (useMoreMemory){
 		thrust::device_vector<int>dlengthOfPath(graph.nrVertices);
