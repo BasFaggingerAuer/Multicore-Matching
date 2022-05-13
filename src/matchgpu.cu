@@ -784,7 +784,7 @@ __global__ void gMatch(int *match, int *fll, int *bll, const int *requests, cons
 }
 
 
-__global__ void gLength(int *match, int *requests, int *fll, int *bll, const int *length, const int nrVertices){
+__global__ void gLength(int *match, int *requests, int *fll, int *bll, int *length, const int nrVertices){
 
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 
