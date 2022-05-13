@@ -1705,8 +1705,9 @@ void GraphMatchingGeneralGPURandom::performMatching(vector<int> &match, cudaEven
 														drequests, graph.nrVertices);
 			gMatch<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
 														drequests, graph.nrVertices);
-			gLength<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
-														dlength, drequests, graph.nrVertices);
+			if (useMaxLength)
+				gLength<<<blocksPerGrid, threadsPerBlock>>>(dmatch, dforwardlinkedlist, dbackwardlinkedlist, 
+															dlength, drequests, graph.nrVertices);
 			//}
 			cudaDeviceSynchronize();
 			checkLastErrorCUDA(__FILE__, __LINE__);													
